@@ -50,8 +50,8 @@ function updateMap() {
         .catch(error => {
             console.warn(`Failed to load ${csvPath}, loading fallback: ${fallbackPath}`);
             // 禁用下拉框
-            document.getElementById("data-type").disabled = false;
-            document.getElementById("year").disabled = false;
+            document.getElementById("data-type").disabled = true;
+            document.getElementById("year").disabled = true;
             d3.csv(fallbackPath).then(data => {
                 processData(data);
             });
