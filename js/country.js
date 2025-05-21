@@ -4,10 +4,11 @@ document.getElementById("year").addEventListener("change", updateMap);
 
 // 获取参数
 const params = new URLSearchParams(window.location.search);
-const code = params.get("code");
+const countryCode = params.get("code");
+const countryName = params.get("name");
 
 // 构建路径
-const jsonPath = `data/countries/${code}.json`;
+const jsonPath = `data/worldProvince.json`;
 
 let projection = d3.geoMercator();
 let mapDataGlobal = null; // 存储地图数据
@@ -17,17 +18,46 @@ let unit = "";
 
 // 初始化，加载地图数据
 d3.json(jsonPath).then(mapData => {
-    mapDataGlobal = mapData;
+    mapDataGlobal = {
+        type: "FeatureCollection",
+        features: mapData.features.filter(d => d.properties.admin === countryName)
+    };
     updateMap(); // 初次加载地图和默认数据
 });
 
 // 获取选择值并加载对应 CSV 文件
 function updateMap() {
+    // 重新加载数据
+    d3.json(jsonPath).then(mapData => {
+        mapDataGlobal = {
+            type: "FeatureCollection",
+            features: mapData.features.filter(d => d.properties.admin === countryName)
+        };
+    });
+
     const type = document.getElementById("data-type").value;
     const year = document.getElementById("year").value;
-    const csvPath = `data/countries/${code}-${type}.csv`;
+    const csvPath = `data/countries/${countryCode}-${type}.csv`;
+    const fallbackPath = `data/countries/population.csv`;
 
-    d3.csv(csvPath).then(data => {
+    d3.csv(csvPath)
+        .then(data => {
+            // 启用下拉框
+            document.getElementById("data-type").disabled = false;
+            document.getElementById("year").disabled = false;
+            processData(data);
+        })
+        .catch(error => {
+            console.warn(`Failed to load ${csvPath}, loading fallback: ${fallbackPath}`);
+            // 禁用下拉框
+            document.getElementById("data-type").disabled = false;
+            document.getElementById("year").disabled = false;
+            d3.csv(fallbackPath).then(data => {
+                processData(data);
+            });
+        });
+
+    function processData(data) {
         const dataMap = new Map();
         data.forEach(d => {
             const region = d["region"];
@@ -40,7 +70,7 @@ function updateMap() {
 
         // 绘制地图
         drawChoropleth(mapDataGlobal, dataMap);
-    });
+    }
 }
 
 // 主绘图逻辑
@@ -52,14 +82,16 @@ function drawChoropleth(mapData, dataMap) {
     const height = +svgMap.attr("height");
 
     // 设置投影
-    const cities = topojson.feature(mapData, mapData.objects.cities);
+    //const cities = topojson.feature(mapData, mapData.objects.cities);
     //projection.fitSize([width, height], cities);
-    setProjection(width, height, cities);
+    setProjection(width, height, mapData);
     const path = d3.geoPath().projection(projection);
 
     const values = Array.from(dataMap.values());
     const min = d3.quantile(values, 0.1);  // 下边5%
     const max = d3.quantile(values, 0.9);  // 上边5%
+
+    //console.log(dataMap);
 
     // 颜色映射
     const color = d3.scaleQuantize()
@@ -69,32 +101,50 @@ function drawChoropleth(mapData, dataMap) {
     svgMap.append("g")
         .attr("class", "regions")
         .selectAll("path")
-        .data(cities.features)
+        .data(mapData.features)
         .enter()
         .append("path")
         .attr("fill", d => {
-            const name = d.properties["cityName"];
-            const value = dataMap.get(name);
+            const name = d.properties.name;
+            const nameAlt = d.properties.name_alt || "";
+            const alternatives = [name, ...nameAlt.split("|").map(n => n.trim())];
+
+            // 尝试用主名称和所有别名查找 value
+            const matchedName = alternatives.find(n => dataMap.has(n));
+            const value = matchedName ? dataMap.get(matchedName) : null;
+
+            //const value = dataMap.get(name);
             return value != null ? color(value) : "#ccc";
         })
         .attr("d", path)
         .append("title")
         .text(d => {
-            const name = d.properties["cityName"];
-            const value = dataMap.get(name);
+            const name = d.properties.name;
+
+            const nameAlt = d.properties.name_alt || "";
+            const alternatives = [name, ...nameAlt.split("|").map(n => n.trim())];
+
+            // 尝试用主名称和所有别名查找 value
+            const matchedName = alternatives.find(n => dataMap.has(n));
+            const value = matchedName ? dataMap.get(matchedName) : null;
+
             return name + (value != null ? ": " + value : "（无数据）");
         });
 
+    // geojson -> topojson
+    const topo = topojson.topology({ provinces: mapData });
+
+    // 分别绘制重合和未重合的边线
     svgMap.append("path")
-        .datum(topojson.mesh(mapData, mapData.objects.cities, (a, b) => a !== b))
-        .attr("class", "cities")
+        .datum(topojson.mesh(topo, topo.objects.provinces, (a, b) => a == b))
+        .attr("class", "borders")
         .attr("d", path)
         .attr("fill", "none")
         .attr("stroke", "black")
         .attr("stroke-width", 0.5);
 
     svgMap.append("path")
-        .datum(topojson.mesh(mapData, mapData.objects.cities, (a, b) => a === b))
+        .datum(topojson.mesh(topo, topo.objects.provinces, (a, b) => a !== b))
         .attr("class", "outline")
         .attr("d", path)
         .attr("fill", "none")
@@ -106,8 +156,6 @@ function drawChoropleth(mapData, dataMap) {
 
 // 绘制图例
 function drawLegend(color, min, max) {
-    const width = +svgLegend.attr("width");
-    const height = +svgLegend.attr("height");
 
     const x = d3.scaleLinear()
         .domain([min, max])
@@ -143,13 +191,13 @@ function drawLegend(color, min, max) {
             .tickSize(13)
             .tickValues(color.range().map(d => color.invertExtent(d)[0]))
             .tickFormat(d => d3.format(",")(Math.floor(d / 1000) * 1000))
-            //.tickFormat(d3.format(".0f"))
+        //.tickFormat(d3.format(".0f"))
     ).select(".domain").remove();
 }
 
 function setProjection(width, height, cities) {
-    switch(code) {
-        case "CHN":
+    switch (countryCode) {
+        default:
             projection.fitSize([width, height], cities);
             break;
         case "USA":

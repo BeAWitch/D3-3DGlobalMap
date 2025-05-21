@@ -121,7 +121,7 @@ async function drawGlobe() {
         .on("click", function (country) {
             const countryCode = country.id;
             const countryName = country.properties.name;
-            window.location.href = `country.html?code=${countryCode}`;
+            window.location.href = `country.html?code=${countryCode}&name=${countryName}`;
         });
     
     // Optional rotate
