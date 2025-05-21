@@ -1,89 +1,399 @@
 body {
-     margin: 0;
-     padding: 0;
-     background: #fff;
-     overflow: hidden;
-     user-select: none;
+    margin: 0;
+    padding: 0;
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans CN", sans-serif;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
 }
 
-#header {
-     display: flex;
-     flex-direction: column;
-     align-items: center;
- }
-
-#page-title {
-     font: 16px 'Open Sans', sans-serif;
-     font-size: 2em;
-     font-weight: 500;
+.main-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
 }
 
-#color-scale {
-     width: 300px;
-     height: 15px;
-     margin: 0 auto;
-     border: 1px solid #ccc;
- }
+.left-panel {
+    flex: 3;
+    height: 100%;
+    position: relative;
+    background: linear-gradient(to bottom right, #f8f8f8, #f0f0f0);
+}
 
- #globe-container {
-     position: absolute;
-     top: 55%;
-     left: 50%;
-     transform: translate(-50%, -50%);
-     height: 100vh;
-     width: 100vw;
-     display: flex;
-     justify-content: center;
-     align-items: center;
+.right-panel {
+    flex: 1;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #fff;
+    box-shadow: -2px 0 12px rgba(0, 0, 0, 0.08);
+    overflow-y: auto;
+    justify-content: flex-start;
+}
+
+#globe-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
 }
 
 #globe-container svg {
-    position: absolute; 
-    top: 0;
-    left: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
-#globe {
-     fill: #f2f2f2;
-     stroke: #000;
-     stroke-width: 0.25px;
+#page-title {
+    font-size: 1.2em;
+    margin: 8px 0;
+    color: #333;
+    text-align: center;
 }
 
-.countries {
-     stroke: #000;
-     stroke-width: 0.25px;
+#color-scale {
+    width: 100%;
+    height: 5px;
+    margin: 8px 0;
 }
 
- #tooltip {
-     position: absolute;
-     text-align: left;
-     width: 200px;
-     height: auto;
-     padding: 10px;
-     font: 14px 'Arial', sans-serif;
-     background: #f9f9f9; 
-     border: 1px solid #ddd; 
-     box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1); 
-     border-radius: 5px; 
-     pointer-events: none;
-     color: #333; 
-     opacity: 0.9;
-     line-height: 1.6; 
- }
- 
- #tooltip h4 {
-     margin-top: 0;
- }
+#legend-container {
+    height: auto;
+    margin-bottom: 8px;
+}
 
- #name-flag-container{
-     display: flex;
-     flex-direction: row;
-     gap: 10px;
- }
- 
- #tooltip img {
-     height: 25px;
-     width: 45px;
-     border: 1px solid #ccc;
-     border-radius: 2px;
+#timeline-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 8px;
+}
+
+#year-slider {
+    width: 100%;
+    height: 5px;
+    -webkit-appearance: none;
+    background: linear-gradient(to right, #f5f0d7, #5c1010);
+    border-radius: 3px;
+    cursor: pointer;
+    margin: 8px 0;
+}
+
+#year-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #5c1010;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+#year-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+#year-display {
+    text-align: center;
+    font-weight: bold;
+    font-size: 1em;
+    margin: 4px 0;
+}
+
+#tooltip {
+    position: absolute;
+    width: 200px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    pointer-events: none;
+    z-index: 100;
+    font-size: 0.9em;
+    line-height: 1.5;
+    backdrop-filter: blur(2px);
+    background-color: rgba(255, 255, 255, 0.93);
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+#name-flag-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#tooltip-flag {
+    height: 20px;
+    width: 30px;
+    border: 1px solid #eee;
+}
+
+.data-toggle {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    background: #e0e0e0;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    letter-spacing: 0.5px;
+    font-size: 0.95em;
+}
+
+.toggle-btn:hover {
+    background: #4a0d0d;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-btn.active {
+    background: #5c1010;
+    color: white;
+}
+
+.speed-control {
+    margin-top: 12px;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 8px;
+}
+
+.speed-control label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+#rotation-speed {
+    width: 100%;
+    height: 5px;
+    -webkit-appearance: none;
+    background: linear-gradient(to right, #f5f0d7, #5c1010);
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+#rotation-speed::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #5c1010;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+#rotation-speed::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+.search-control {
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    margin-top: 12px;
+}
+
+.range-columns {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.range-column {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.range-column input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.range-column input:focus {
+    outline: none;
+    border-color: #5c1010;
+    box-shadow: 0 0 0 2px rgba(92, 16, 16, 0.1);
+}
+
+.range-column button {
+    width: 100%;
+    padding: 8px;
+    background: #5c1010;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.range-column button:hover {
+    background: #7a1a1a;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.range-to {
+    padding: 0 4px;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.countries path {
+    transition: fill 0.15s ease-out;
+}
+
+.countries path:hover {
+    stroke-width: 0.5px !important;
+    stroke: #333 !important;
+}
+
+.toggle-btn,
+.speed-control label,
+.search-control label {
+    font-weight: 500;
+}
+
+#year-display,
+.range-to {
+    font-weight: 500;
+}
+
+#tooltip-country-name {
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+#tooltip-population {
+    display: block;
+    margin-top: 6px;
+    color: #555;
+}
+
+.play-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+/* 播放按钮样式 */
+#play-button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #5c1010; /* 深红色背景 */
+    border: none;
+    cursor: pointer;
+    position: relative;
+    padding: 0;
+    color: white; /* 确保图标颜色继承白色 */
+}
+
+
+/* 暂停图标（白色双竖条） */
+#play-button.playing::before {
+    width: 8px;
+    height: 12px;
+    background:
+            linear-gradient(90deg,
+            currentColor 0%, currentColor 40%,
+            transparent 40%, transparent 60%,
+            currentColor 60%, currentColor 100%);
+    border: none;
+    transform: translate(-50%, -50%);
+}
+
+/* 速度控制容器 */
+.speed-control-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-grow: 1;
+    background: #f5f5f5;
+    padding: 8px 12px;
+    border-radius: 6px;
+    height: 36px;
+    box-sizing: border-box;
+}
+
+/* 速度滑块 */
+#play-speed {
+    flex-grow: 1;
+    height: 5px;
+    -webkit-appearance: none;
+    background: linear-gradient(to right, #f5f0d7, #5c1010);
+    border-radius: 3px;
+    cursor: pointer;
+    margin: 0;
+}
+
+#play-speed::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #5c1010;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+#play-speed::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+/* 速度显示 */
+#speed-display {
+    font-size: 0.95em;
+    min-width: 45px;
+    text-align: right;
+    font-weight: 500;
+    color: #333;
+}
+
+/* 播放控制容器布局 */
+.play-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+/* 添加到style.css */
+#play-button svg {
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* 防止SVG拦截点击事件 */
+}
+
+#play-icon {
+    fill: currentColor; /* 继承按钮文字颜色 */
+    transition: fill 0.2s;
 }
