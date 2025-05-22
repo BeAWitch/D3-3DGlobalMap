@@ -1,5 +1,3 @@
-
-
 // 获取URL参数
 const params = new URLSearchParams(window.location.search);
 const countryCode = params.get("code");
@@ -17,6 +15,7 @@ let svgMap = d3.select("#map");
 let svgLegend = d3.select("#legend");
 let unit = "";
 let initialScale = 1;
+let initialTranslate;
 const ZOOM_SENSITIVITY = 0.5;
 const DRAG_SENSITIVITY = 60; // 与文档2一致的拖拽灵敏度
 
@@ -52,16 +51,17 @@ function addInteractions() {
     // 创建缩放行为
     const zoom = d3.zoom()
         .scaleExtent([ZOOM_SENSITIVITY, 8])
-        .on('zoom', function() {
-            // 更新当前的变换状态
-            transform = d3.event.transform;
+        .on('zoom', function (event) {
+
+            transform = event.transform;
 
             // 应用变换到投影
-            projection.scale(initialScale * transform.k);
-            projection.translate([
-                transform.x + svgMap.attr("width") / 2,
-                transform.y + svgMap.attr("height") / 2
-            ]);
+            projection
+                .scale(initialScale * transform.k)
+                .translate([
+                    initialTranslate[0] + transform.x,
+                    initialTranslate[1] + transform.y
+                ]);
 
             // 重绘地图
             redrawMap();
@@ -69,45 +69,13 @@ function addInteractions() {
 
     // 应用缩放行为到SVG
     svgMap.call(zoom);
-
-    // 添加拖拽行为（通过缩放行为处理）
-    svgMap.on("mousedown", function() {
-        // 记录鼠标按下时的位置
-        const startPos = d3.mouse(this);
-        const startTranslate = projection.translate();
-
-        // 监听鼠标移动
-        svgMap.on("mousemove.drag", function() {
-            const currentPos = d3.mouse(this);
-
-            // 计算平移量
-            const dx = (currentPos[0] - startPos[0]) * (DRAG_SENSITIVITY / projection.scale());
-            const dy = (currentPos[1] - startPos[1]) * (DRAG_SENSITIVITY / projection.scale());
-
-            // 更新投影的平移
-            projection.translate([
-                startTranslate[0] + dx,
-                startTranslate[1] + dy
-            ]);
-
-            // 重绘地图
-            redrawMap();
-        });
-    });
-
-    // 鼠标释放时移除拖拽监听
-    svgMap.on("mouseup", function() {
-        svgMap.on("mousemove.drag", null);
-    });
-
-    // 鼠标离开SVG时也移除拖拽监听
-    svgMap.on("mouseleave", function() {
-        svgMap.on("mousemove.drag", null);
-    });
 }
 
 // 重绘地图
 function redrawMap() {
+
+    //console.log("Checking mapDataGlobal:", mapDataGlobal);
+
     const path = d3.geoPath().projection(projection);
     svgMap.selectAll(".regions path").attr("d", path);
     svgMap.select(".borders").attr("d", path);
@@ -208,7 +176,9 @@ function drawChoropleth(mapData, dataMap) {
         });
 
     // 绘制边界
-    const topo = topojson.topology({ provinces: mapData });
+    const mapDataCopy = structuredClone(mapData);
+    const topo = topojson.topology({ provinces: mapDataCopy });
+
     svgMap.append("path")
         .datum(topojson.mesh(topo, topo.objects.provinces, (a, b) => a == b))
         .attr("class", "borders")
@@ -236,13 +206,13 @@ function setProjection(width, height, geoData) {
         case "USA":
             projection = d3.geoAlbersUsa()
                 .scale(1300)
-                .translate([width/2, height/2]);
+                .translate([width / 2, height / 2]);
             break;
         case "RU":
             projection = d3.geoMercator()
                 .center([100, 65])
                 .scale(300)
-                .translate([width/2, height/2]);
+                .translate([width / 2, height / 2]);
             break;
         default:
             const effectiveWidth = Math.max(100, +svgMap.attr("width") || 800);
@@ -252,8 +222,9 @@ function setProjection(width, height, geoData) {
                 .fitSize([effectiveWidth, effectiveHeight], geoData);
     }
 
-    // 存储初始比例用于缩放
+    // 存储初始比例用于变换
     initialScale = projection.scale();
+    initialTranslate = projection.translate();
 }
 
 // 绘制图例
