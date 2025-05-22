@@ -1,0 +1,465 @@
+/* 基础样式 */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans CN", sans-serif;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* 主容器布局 */
+.main-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+.left-panel {
+    flex: 3;
+    height: 100%;
+    position: relative;
+    background: linear-gradient(to bottom right, #f8f8f8, #f0f0f0);
+}
+
+.right-panel {
+    flex: 1;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #fff;
+    box-shadow: -2px 0 12px rgba(0, 0, 0, 0.08);
+    overflow-y: auto;
+    justify-content: flex-start;
+}
+
+/* 地球容器样式 */
+#globe-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+#globe-container svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.countries path {
+    transition: fill 0.15s ease-out;
+}
+
+.countries path:hover {
+    stroke-width: 0.5px !important;
+    stroke: #333 !important;
+}
+
+/* 标题和颜色比例尺 */
+#page-title {
+    font-size: 1.2em;
+    margin: 4px 0;
+    color: #333;
+    text-align: center;
+}
+
+/* 调整颜色比例尺和下方间距 */
+#color-scale {
+    width: 100%;
+    height: 30px; /* 增加高度 */
+    margin: 2px 0; /* 减少上下边距 */
+}
+
+#legend-container {
+    height: auto;
+    margin-bottom: 1px; /* 减少下方间距 */
+}
+
+/* 时间轴控件 */
+#timeline-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border: 1px solid #eee;
+    margin-bottom: 12px;
+}
+
+/* 统一滑块样式 */
+#year-slider, #play-speed, #rotation-speed {
+    width: 100%;
+    height: 6px;
+    -webkit-appearance: none;
+    background: linear-gradient(to right, #e0e0e0, #5c1010);
+    border-radius: 3px;
+    cursor: pointer;
+    margin: 12px 0;
+}
+
+#year-slider::-webkit-slider-thumb,
+#play-speed::-webkit-slider-thumb,
+#rotation-speed::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #5c1010;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease;
+}
+
+#year-slider::-webkit-slider-thumb:hover,
+#play-speed::-webkit-slider-thumb:hover,
+#rotation-speed::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+/* 年份显示居中优化 */
+#year-display {
+    text-align: center;
+    font-size: 1.2em;
+    color: #5c1010;
+    font-weight: 600;
+    background: #f9f9f9;
+    padding: 5px;
+    border-radius: 8px;
+    margin: 5px auto;
+    width: 250px;
+    display: block;
+}
+
+/* 播放控制区域优化 */
+.play-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+#play-button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #5c1010;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    padding: 0;
+    color: white;
+}
+
+#play-button svg {
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+#play-icon {
+    fill: currentColor;
+    transition: fill 0.2s;
+}
+
+.speed-control-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 速度显示标签样式 */
+#speed-display {
+    font-size: 0.95em;
+    color: #5c1010;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: center;
+    background: #f9f9f9;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+/* 数据切换按钮 */
+.data-toggle {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    background: #e0e0e0;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    letter-spacing: 0.5px;
+    font-size: 0.95em;
+}
+
+.toggle-btn:hover {
+    background: #4a0d0d;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-btn.active {
+    background: #5c1010;
+    color: white;
+}
+
+/* 搜索和范围控件 */
+.search-control {
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    margin-top: 12px;
+}
+
+.range-columns {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.range-column {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.range-column input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.range-column input:focus {
+    outline: none;
+    border-color: #5c1010;
+    box-shadow: 0 0 0 2px rgba(92, 16, 16, 0.1);
+}
+
+.range-column button {
+    width: 100%;
+    padding: 8px;
+    background: #5c1010;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.range-column button:hover {
+    background: #7a1a1a;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.range-to {
+    padding: 0 4px;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+/* 工具提示样式 */
+#tooltip {
+    position: absolute;
+    width: 400px;
+    max-width: 90vw;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    pointer-events: none;
+    z-index: 100;
+    font-size: 0.9em;
+    line-height: 1.5;
+    backdrop-filter: blur(2px);
+    background-color: rgba(255, 255, 255, 0.93);
+    transition: all 0.3s ease;
+}
+
+#name-flag-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#tooltip-flag {
+    height: 20px;
+    width: 30px;
+    border: 1px solid #eee;
+}
+
+#tooltip-country-name {
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+#tooltip-population {
+    display: block;
+    margin-top: 6px;
+    color: #555;
+}
+
+#hover-tooltip {
+    position: absolute;
+    width: 180px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #eee;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+    z-index: 100;
+    font-size: 0.85em;
+    line-height: 1.4;
+}
+
+/* 详情弹窗样式 */
+#detail-tooltip {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 1000;
+    display: none;
+    overflow: hidden;
+}
+
+.map-modal {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    padding: 0;
+}
+
+.modal-header {
+    width: 100%;
+    padding: 15px 20px;
+    background: #5c1010;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.4em;
+    font-weight: 500;
+}
+
+.modal-header .close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.8em;
+    cursor: pointer;
+    padding: 0 10px;
+    line-height: 1;
+    transition: transform 0.2s;
+}
+
+.modal-header .close-btn:hover {
+    transform: scale(1.2);
+}
+
+.map-container {
+    flex: 1;
+    background: #f5f5f5;
+    overflow: hidden;
+}
+
+/* 省级地图样式 */
+#province-map-container {
+    margin-top: 15px;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+}
+
+#province-map {
+    width: 100%;
+    height: 300px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.map-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.map-controls select {
+    flex: 1;
+    padding: 5px;
+    font-size: 0.9em;
+}
+
+/* 加载状态 */
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    #detail-tooltip {
+        width: calc(100% - 320px) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    #detail-tooltip {
+        left: 10px !important;
+        top: 10px !important;
+        width: calc(100% - 20px) !important;
+        height: calc(100% - 20px) !important;
+    }
+
+    .right-panel {
+        display: none;
+    }
+}
+
+.speed-control {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border: 1px solid #eee;
+    margin-bottom: 12px;
+}
+
+.speed-control label {
+    display: block;
+    margin-bottom: 12px;
+    color: #333;
+    font-weight: 500;
+}
