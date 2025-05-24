@@ -73,6 +73,18 @@
     <span id="tooltip-population"></span>
 </div>
 
+<template id="detail-tooltip-template">
+    <div class="map-modal">
+        <div class="modal-header" style="background: white; color: #5c1010;">
+            <h3 class="modal-title"></h3>
+            <button class="close-btn" style="color: #5c1010;">&times;</button>
+        </div>
+        <div class="iframe-container" style="width:100%; height:calc(100% - 50px);">
+            <iframe style="width:100%; height:100%; border:none;"></iframe>
+        </div>
+    </div>
+</template>
+
 <script src="https://d3js.org/d3.v5.min.js"></script>
 <script src="js/index.js" defer></script>
 </body>

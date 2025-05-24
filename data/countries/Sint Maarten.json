@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "Sint Maarten",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "featurecla": "Admin-1 states provinces", "name": "Sint Maarten", "name_alt": null, "admin": "Sint Maarten", "latitude": 18.0401, "longitude": -63.0677, "area_sqkm": 0.0, "name_zh": "荷属圣马丁", "name_en": "Sint Maarten" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -63.107004360999952, 18.062119859000063 ], [ -63.085886190999901, 18.058511251000098 ], [ -63.017568585288387, 18.033391472351283 ], [ -63.030629035999937, 18.019110419000071 ], [ -63.097645636999914, 18.035956122000073 ], [ -63.112172003999945, 18.043036200000074 ], [ -63.118885870999918, 18.05149974200009 ], [ -63.107004360999952, 18.059475002000056 ], [ -63.107004360999952, 18.062119859000063 ] ] ] } }
+]
+}
