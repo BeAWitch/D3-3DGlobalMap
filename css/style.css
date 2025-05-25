@@ -35,6 +35,13 @@ body {
     justify-content: flex-start;
 }
 
+:root {
+    --primary-color: #5c1010;
+    --secondary-color: #7a1a1a;
+    --accent-color: #d3a863;
+    --light-bg: #f9f5f0;
+}
+
 /* 地球容器样式 */
 #globe-container {
     width: 100%;
@@ -49,6 +56,15 @@ body {
     transform: translate(-50%, -50%);
 }
 
+#globe {
+    filter: drop-shadow(0 0 8px rgba(0,0,0,0.1));
+    transition: filter 0.3s;
+}
+
+#globe:hover {
+    filter: drop-shadow(0 0 12px rgba(0,0,0,0.15));
+}
+
 .countries path {
     transition: fill 0.15s ease-out;
 }
@@ -58,10 +74,13 @@ body {
     stroke: #333 !important;
 }
 
+
 #page-title {
-    font-size: 1.2em;
-    margin: 4px 0;
-    color: #333;
+    font-size: 1.3em;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    margin-bottom: 2px;
+    color: var(--primary-color);
     text-align: center;
 }
 
@@ -76,7 +95,7 @@ body {
     padding: 16px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     border: 1px solid #eee;
-    margin-bottom: 12px;
+    margin-bottom: 4px;
 }
 
 /* 统一滑块样式 */
@@ -116,7 +135,7 @@ body {
     color: #5c1010;
     font-weight: 600;
     background: #f9f9f9;
-    padding: 5px;
+    padding: 3px;
     border-radius: 8px;
     margin: 5px auto;
     width: 250px;
@@ -169,7 +188,7 @@ body {
     min-width: 40px;
     text-align: center;
     background: #f9f9f9;
-    padding: 4px 8px;
+    padding: 4px 5px;
     border-radius: 4px;
 }
 
@@ -177,7 +196,7 @@ body {
 .data-toggle {
     display: flex;
     gap: 6px;
-    margin-bottom: 10px;
+    margin-bottom: 1px;
 }
 
 .toggle-btn {
@@ -210,7 +229,8 @@ body {
     padding: 10px;
     background: #f5f5f5;
     border-radius: 8px;
-    margin-top: 12px;
+    margin-top: 8px;
+    margin-bottom: 6px;
 }
 
 .range-columns {
@@ -267,65 +287,94 @@ body {
     font-size: 0.9em;
 }
 
-/* 工具提示样式 */
 #tooltip {
     position: absolute;
-    width: 400px;
-    max-width: 90vw;
-    padding: 15px;
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    min-width: 260px;
+    max-width: 320px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(92, 16, 16, 0.15);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     pointer-events: none;
-    z-index: 100;
-    font-size: 0.9em;
-    line-height: 1.5;
-    backdrop-filter: blur(2px);
-    background-color: rgba(255, 255, 255, 0.93);
-    transition: all 0.3s ease;
+    z-index: 1000;
+    font-size: 0.95em;
+    line-height: 1.6;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    display: none; /* 初始隐藏 */
+}
+
+#tooltip.visible {
+    display: block; /* 直接显示，无动画 */
 }
 
 #name-flag-container {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    margin-bottom: 0px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(92, 16, 16, 0.1);
 }
 
 #tooltip-flag {
-    height: 20px;
-    width: 30px;
-    border: 1px solid #eee;
-}
-
-#tooltip-country-name {
-    font-weight: 600;
-    letter-spacing: 0.3px;
+    height: 24px;
+    width: 36px;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    object-fit: cover;
 }
 
 #tooltip-country-name_zh {
     font-weight: 600;
+    font-size: 1.15em;
+    color: #333;
+    flex: 1;
     letter-spacing: 0.3px;
+}
+
+#tooltip-country-name {
+    font-weight: 500;
+    font-size: 0.95em;
+    color: #666;
+    margin-top: 2px;
 }
 
 #tooltip-population {
     display: block;
-    margin-top: 6px;
-    color: #555;
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: rgba(92, 16, 16, 0.05);
+    border-radius: 6px;
+    color: #5c1010;
+    font-weight: 600;
+    font-size: 1em;
+    position: relative;
+    padding-left: 28px;
 }
 
-#hover-tooltip {
+#tooltip-population:before {
+    content: "";
     position: absolute;
-    width: 180px;
-    padding: 8px;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid #eee;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    background-color: #5c1010;
+    border-radius: 50%;
+}
+
+.tooltip-coord {
+    color: #666;
+    font-size: 0.9em;
+    font-family: 'Courier New', monospace;
+    background: rgba(92, 16, 16, 0.05);
+    padding: 4px 4px;
     border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    pointer-events: none;
-    z-index: 100;
-    font-size: 0.85em;
-    line-height: 1.4;
+    display: inline-block;
+    margin-top: -15px;
 }
 
 /* 详情弹窗样式 */
@@ -373,15 +422,97 @@ body {
 .speed-control {
     background: #fff;
     border-radius: 12px;
-    padding: 16px;
+    padding: 12px 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     border: 1px solid #eee;
-    margin-bottom: 12px;
+    margin-bottom: 2px;
+    display: flex; /* 使用flex布局 */
+    align-items: center; /* 垂直居中 */
+    gap: 12px; /* 元素间距 */
 }
 
 .speed-control label {
-    display: block;
-    margin-bottom: 12px;
+    display: inline-block; /* 改为行内元素 */
+    margin-bottom: 0; /* 移除底部间距 */
     color: #333;
     font-weight: 500;
+    min-width: 80px; /* 固定标签宽度 */
+}
+
+.speed-control input[type="range"] {
+    flex: 1; /* 占据剩余空间 */
+    margin: 0; /* 移除默认边距 */
+}
+
+/* 更新图例样式 */
+#color-scale {
+    height: 50px; /* 适当高度 */
+    margin: 10px 20px; /* 增加左右边距 */
+    overflow: visible;
+}
+
+#color-scale svg {
+    width: calc(100% - 40px); /* 减少宽度留出空间 */
+    height: 25px;
+    overflow: visible;
+}
+
+#color-scale .tick text {
+    font-size: 10px;
+    text-anchor: middle; /* 文本居中对齐 */
+}
+
+/* 添加搜索框样式 */
+.search-box {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 3px;
+}
+
+#country-search {
+    flex: 1;
+    padding: 8px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.95em;
+    transition: border-color 0.2s;
+}
+
+#country-search:focus {
+    outline: none;
+    border-color: #5c1010;
+    box-shadow: 0 0 0 2px rgba(92, 16, 16, 0.1);
+}
+
+#search-button {
+    padding: 8px 16px;
+    background: #5c1010;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#search-button:hover {
+    background: #7a1a1a;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.search-box {
+    transition: all 0.3s ease;
+}
+
+.search-box:focus-within {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* 添加搜索提示样式 */
+.search-hint {
+    font-size: 0.8em;
+    color: #666;
+    margin-top: 4px;
+    text-align: center;
 }

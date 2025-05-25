@@ -28,6 +28,10 @@
         <h1 id="page-title">World Population</h1>
         <div id="color-scale"></div>
         <div id="legend-container"></div>
+        <div class="search-box">
+            <input type="text" id="country-search" placeholder="输入国家名(支持中/英文)">
+            <button id="search-button">定位</button>
+        </div>
         <div class="search-control">
             <label>自定范围:</label>
             <div class="range-columns">
@@ -58,7 +62,7 @@
             <div id="year-display">2000</div>
         </div>
         <div class="speed-control">
-            <label for="rotation-speed">旋转速度:</label>
+            <label for="rotation-speed">旋转速度</label>
             <input type="range" id="rotation-speed" min="0" max="100" value="50">
         </div>
     </div>
@@ -71,6 +75,10 @@
         <img id="tooltip-flag">
     </div>
     <br/>
+    <div class="tooltip-coord">
+        <div><span id="tooltip-min-lon"></span> - <span id="tooltip-max-lon"></span></div>
+        <div><span id="tooltip-min-lat"></span> - <span id="tooltip-max-lat"></span></div>
+    </div>
     <span id="tooltip-population"></span>
 </div>
 

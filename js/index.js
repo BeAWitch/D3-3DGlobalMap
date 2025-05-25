@@ -21,7 +21,6 @@ const LOG_THRESHOLDS = {
 
 const COLOR_NO_DATA = "#B2B2B2";
 const COLOR_HOVER = "#D3D3D3";
-const COLOR_SCALE = "log ";
 
 const GLOBE_CONTAINER = d3.select("#globe-container");
 let GLOBE_WIDTH = GLOBE_CONTAINER.node().getBoundingClientRect().width;
@@ -40,16 +39,9 @@ const MIN_ROTATION_SPEED = 0.0;
 
 // 播放状态控制
 let isPlaying = false;
-let playInterval;
-let isLooping = false;
-let currentPlayDirection = 1; // 1为正向，-1为反向
 let playSpeed = 350;
 let lastTimestamp;
 let animationFrameId;
-
-let currentProvinceMap = null;
-let provinceMapData = null;
-let provinceSvg = null;
 
 // 主函数
 async function drawGlobe() {
@@ -110,8 +102,8 @@ async function drawGlobe() {
         if (!countryData) return COLOR_NO_DATA;
 
         const value = +countryData.Value;
-        const clampedValue = clampToThresholds(value);
-        return logColorScale(clampedValue);
+        // 移除clampToThresholds调用，直接使用原始值
+        return logColorScale(Math.max(value, LOG_THRESHOLDS[currentDataType][0]));
     }
 
     // 初始化地球
@@ -203,7 +195,8 @@ async function drawGlobe() {
             const clone = template.content.cloneNode(true);
             const activeType = document.querySelector('.toggle-btn.active').dataset.type;
             const year = document.getElementById('year-slider').value;
-            clone.querySelector('.modal-title').textContent = country.properties.name;
+            clone.querySelector('.modal-title').textContent =
+                `${country.properties.name_zh || country.properties.name} ${country.properties.name}`;
             clone.querySelector('iframe').src = `country.html?code=${country.id}&name=${country.properties.name}&type=${activeType}&year=${year}`;
 
             detailTooltip.appendChild(clone);
@@ -223,17 +216,61 @@ async function drawGlobe() {
         const countryData = filteredData.find(d => d['Country Code'] === country.id);
         if (!countryData) return;
 
-        toolTip.style("display", "block")
-            .style("left", `${d3.event.pageX + 10}px`)
-            .style("top", `${d3.event.pageY + 10}px`);
+        // 计算经纬度范围
+        const bbox = d3.geoBounds(country);
+        const formatCoord = (coord, isLat) => {
+            const absValue = Math.abs(coord).toFixed(1);
+            const direction = isLat
+                ? (coord >= 0 ? 'N' : 'S')
+                : (coord >= 0 ? 'E' : 'W');
+            return `${absValue}°${direction}`;
+        };
 
+        const minLon = formatCoord(bbox[0][0], false);
+        const minLat = formatCoord(bbox[0][1], true);
+        const maxLon = formatCoord(bbox[1][0], false);
+        const maxLat = formatCoord(bbox[1][1], true);
+
+
+        toolTip
+            .style("display", "block")
+            .style("left", `${d3.event.pageX + 15}px`)  // 保留版本1的15px偏移
+            .style("top", `${d3.event.pageY + 15}px`);
+
+        // 更新内容（同版本1）
         d3.select("#tooltip-country-name_zh").text(country.properties.name_zh);
         d3.select("#tooltip-country-name").text(country.properties.name);
         d3.select("#tooltip-flag").attr("src", `${FLAG_PATH}${country.id}.png`);
+        // 添加经纬度信息
+        d3.select("#tooltip-min-lon").text(minLon);
+        d3.select("#tooltip-max-lon").text(maxLon);
+        d3.select("#tooltip-min-lat").text(minLat);
+        d3.select("#tooltip-max-lat").text(maxLat);
 
+        // 保留版本1的智能数值格式化逻辑
         const value = +countryData.Value;
-        const text = currentDataType === "population" ? `人口: ${d3.format(",.2f")(value / 1e4)} 万` : `GDP: ${d3.format("$,.2f")(value / 1e8)} 亿`;
-        d3.select("#tooltip-population").text(text);
+        let formattedValue;
+        if (currentDataType === "population") {
+            if (value >= 1e8) {
+                formattedValue = `${d3.format(".2f")(value / 1e8)} 亿人`;
+            } else if (value >= 1e4) {
+                formattedValue = `${d3.format(".1f")(value / 1e4)} 万人`;
+            } else {
+                formattedValue = `${d3.format(",")(value)} 人`;
+            }
+        } else {
+            if (value >= 1e12) {
+                formattedValue = `$${d3.format(".2f")(value / 1e12)} 万亿`;
+            } else if (value >= 1e8) {
+                formattedValue = `$${d3.format(".2f")(value / 1e8)} 亿`;
+            } else {
+                formattedValue = `$${d3.format(",")(value)}`;
+            }
+        }
+
+        // 显示格式化后的值
+        d3.select("#tooltip-population")
+            .text(currentDataType === "population" ? `人口: ${formattedValue}` : `GDP: ${formattedValue}`);
     }
 
     // 更新国家颜色
@@ -245,9 +282,12 @@ async function drawGlobe() {
             .attr("d", geoPathGenerator)
             .style("fill", country => {
                 const countryData = filteredData.find(d => d['Country Code'] === country.id);
-                const displayValue = countryData ? +countryData.Value : null;
-                const isInRange = displayValue ? displayValue >= minValue && displayValue <= maxValue : false;
-                return isInRange ? logColorScale(displayValue) : COLOR_NO_DATA;
+                if (!countryData) return COLOR_NO_DATA;
+
+                const displayValue = +countryData.Value;
+                const isInRange = displayValue >= minValue && displayValue <= maxValue;
+                const valueToUse = Math.max(displayValue, LOG_THRESHOLDS[currentDataType][0]);
+                return isInRange ? logColorScale(valueToUse) : COLOR_NO_DATA;
             });
     }
 
@@ -256,35 +296,41 @@ async function drawGlobe() {
         d3.select("#color-scale").selectAll("*").remove();
         const thresholds = LOG_THRESHOLDS[currentDataType];
 
-        // 1. 创建渐变条（与原版样式一致）
+        // 1. 创建渐变条
         const legendContainer = d3.select("#color-scale")
-            .style("height", "40px")
-            .style("margin-bottom", "5px");
+            .style("height", "20px")
+            .style("padding", "0 5px"); // 通过 padding 控制边距
 
-        legendContainer.append("div")
+        // 渐变条容器，宽度与刻度线一致
+        const gradientContainer = legendContainer.append("div")
             .style("height", "15px")
-            .style("background", `linear-gradient(to right, ${LOG_COLORS.join(",")})`);
+            .style("width", "100%") // 宽度由父容器的 padding 控制
+            .style("background", `linear-gradient(to right, ${LOG_COLORS.join(",")}`);
 
-        // 2. 添加对数刻度轴（与原版位置一致）
+        // 2. 添加刻度轴
         const legendSvg = legendContainer.append("svg")
-            .style("width", "100%")
-            .style("height", "20px");
+            .style("width", "100%") // 宽度与渐变条一致
+            .style("height", "25px");
 
-        const legendWidth = legendContainer.node().getBoundingClientRect().width;
-        const xScale = d3.scaleLog()  // 使用对数比例尺！
+        // 计算实际可用宽度（减去 padding）
+        const legendWidth = legendContainer.node().getBoundingClientRect().width - 10; // 减去左右 padding
+
+        const xScale = d3.scaleLog()
             .domain([thresholds[0], thresholds[thresholds.length - 1]])
             .range([0, legendWidth]);
 
         legendSvg.append("g")
             .attr("transform", "translate(0, 0)")
             .call(d3.axisBottom(xScale)
-                .tickValues(thresholds) // 强制显示所有分档阈值
+                .tickValues(thresholds)
                 .tickFormat(d => {
-                    // 格式化标签：10^N 或科学计数法
                     const power = Math.log10(d);
                     return power % 1 === 0 ? `10^${power}` : d3.format(".1e")(d);
                 })
-            );
+                .tickSize(8))
+            .selectAll(".tick text")
+            .style("font-size", "10px")
+            .style("text-anchor", "middle");
     }
 
     // 滑块事件
@@ -393,8 +439,83 @@ async function drawGlobe() {
         }
     }
 
+    function setupCountrySearch() {
+        const searchInput = document.getElementById('country-search');
+        const searchButton = document.getElementById('search-button');
+        const originalColors = new Map();
+        window.debugColors = originalColors; // 暴露给全局用于调试
+
+        function searchAndRotate() {
+            const query = searchInput.value.trim().toLowerCase();
+            if (!query) return;
+
+            const matchedCountry = geoJson.features.find(country => {
+                const name = country.properties.name.toLowerCase();
+                const nameZh = (country.properties.name_zh || '').toLowerCase();
+                return name.includes(query) || nameZh.includes(query);
+            });
+
+            if (matchedCountry) {
+                if (rotationTimer) rotationTimer.stop();
+                isGlobeRotating = false;
+
+                // 存储原始颜色
+                globeSvg.selectAll(".countries path").each(function(d) {
+                    originalColors.set(d.id, d3.select(this).style("fill"));
+                });
+
+                // 应用高亮
+                globeSvg.selectAll(".countries path")
+                    .style("fill", d => d.id === matchedCountry.id
+                        ? originalColors.get(d.id)
+                        : COLOR_NO_DATA);
+
+                const centroid = d3.geoCentroid(matchedCountry);
+                const rotate = geoProjection.rotate();
+                const targetRotation = [-centroid[0], -centroid[1]];
+                const targetScale = initialScale * 3.2; // 使用初始比例乘以3.2
+
+                // 更新缩放行为，基于新的目标比例
+                globeSvg.call(configureZoom(targetScale, geoProjection));
+
+                d3.transition()
+                    .duration(1200)
+                    .tween("rotate", function() {
+                        const r = d3.interpolate(rotate, targetRotation);
+                        const s = d3.interpolate(geoProjection.scale(), targetScale);
+                        return function(t) {
+                            geoProjection.rotate(r(t)).scale(s(t));
+                            globeSvg.selectAll("path").attr("d", geoPathGenerator);
+                            globeSvg.select("#globe").attr("r", geoProjection.scale());
+                        };
+                    })
+                    .on("end", function() {
+                        setTimeout(() => {
+                            restoreColors();
+                        }, 1200);
+                    });
+            } else {
+                alert("未找到匹配的国家");
+            }
+        }
+
+        function restoreColors() {
+            globeSvg.selectAll(".countries path").each(function(d) {
+                const originalColor = originalColors.get(d.id);
+                if (originalColor) {
+                    d3.select(this).style("fill", originalColor);
+                }
+            });
+        }
+
+        searchButton.addEventListener('click', searchAndRotate);
+        searchInput.addEventListener('keypress', e => e.key === 'Enter' && searchAndRotate());
+    }
+
+
     // 初始化对数比例尺
     updateLogScale(currentData);
+    setupCountrySearch();
 
     // 初始化事件监听器
     d3.selectAll(".toggle-btn").on("click", handleDataToggle);
@@ -430,7 +551,12 @@ async function drawGlobe() {
 
     // 添加按空格暂停逻辑
     document.addEventListener('keydown', function (event) {
-        if (event.code === 'Space') {
+        // 检查当前焦点是否在输入框内
+        const activeElement = document.activeElement;
+        const isInputFocused = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA';
+
+        // 如果是空格键且不在输入框中，才触发暂停
+        if (event.code === 'Space' && !isInputFocused) {
             event.preventDefault();
             if (isGlobeRotating) {
                 rotationTimer.stop();

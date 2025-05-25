@@ -102,14 +102,14 @@ function redrawMap() {
 
 // 更新地图函数
 function updateMap() {
+
     if (!mapDataGlobal) return;
 
     // 设置国家标题
     d3.select("#country-title").text(countryName);
-
-    const type = dataType;
+    const type = dataType || "population";
     const year = dataYear;
-
+    console.log("Initial dataType from URL:", dataType);
     const csvPath = type === "population" ? populationPath : gdpPath;
     const fallbackPath = type === "population" ? populationPath : `data/gdp.csv`;
 
@@ -226,7 +226,6 @@ function drawChoropleth(mapData, dataMap, validValues) {
 
             const element = d3.select(this);
             const currentColor = element.style("fill");
-            // 存储原始颜色
             element.attr("data-original-color", currentColor);
             element.style("fill", COLOR_HOVER);
 
@@ -234,20 +233,24 @@ function drawChoropleth(mapData, dataMap, validValues) {
                 .classed("highlighted", true)
                 .raise();
 
-            const latitude = d.properties.latitude.toFixed(1);
-            const longitude = d.properties.longitude.toFixed(1);
-            
-            if (value !== null && !isNaN(value) && value > 0) {
+            // 处理经纬度显示
+            const longitude = +d.properties.longitude;
+            const latitude = +d.properties.latitude;
+            const lonStr = `${Math.abs(longitude).toFixed(1)}°${longitude >= 0 ? 'E' : 'W'}`;
+            const latStr = `${Math.abs(latitude).toFixed(1)}°${latitude >= 0 ? 'N' : 'S'}`;
+
+            if (value !== null && !isNaN(value)){
                 tooltip.transition()
                     .duration(200)
                     .style("opacity", 0.9);
 
                 tooltip.html(`
-                    <div><strong>中文名：${name_zh}</strong></div>
-                    <div><strong>英文名：${name_en}</strong></div>
-                    <div><strong>经度：${longitude}，纬度：${latitude}</strong></div>
-                    <div>${dataType === "population" ? "人口": "GDP"}：${formatValue(value)}${unit ? ` ${unit}` : ''}</div>
-                `)
+            <div class="tooltip-title">${name_zh}</div>
+            <div class="tooltip-row"><span class="tooltip-label">${name_en}</span></div>
+            ${nameAlt ? `<div class="tooltip-row"><span class="tooltip-label">${nameAlt.replace(/\|/g, ", ")}</span></div>` : ''}
+            <div class="tooltip-row"><span class="tooltip-coord">${lonStr} / ${latStr}</span></div>
+            <div class="tooltip-row"><span class="tooltip-value">${formatValue(value)}${unit ? ` ${unit}` : ''}</span></div>
+        `)
                     .style("left", (event.pageX + 10) + "px")
                     .style("top", (event.pageY - 28) + "px");
             }
@@ -327,7 +330,7 @@ function formatValue(value) {
 
 function drawLegend(colorScale, min, max) {
     const legendContainer = d3.select("#header-legend")
-        .style("width", "850px")
+        .style("width", "880px")
         .style("height", "50px")  // 增加固定高度
         .style("display", "block") // 确保是块级元素
         .style("overflow", "visible"); // 确保内容可见
@@ -341,12 +344,12 @@ function drawLegend(colorScale, min, max) {
 
     // 2. 创建刻度轴（动态单位）
     const legendSvg = legendContainer.append("svg")
-        .style("width", "850px")
+        .style("width", "880px")
         .style("height", "15px") // 仅刻度线高度
         .style("margin-top", "-5px") // 向上偏移，与色块重叠
         .style("display", "block");
 
-    const legendWidth = 850;
+    const legendWidth = 880;
 
     // 创建线性比例尺（更适应动态单位）
     const xScale = d3.scaleLinear()
