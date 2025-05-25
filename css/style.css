@@ -303,6 +303,11 @@ body {
     letter-spacing: 0.3px;
 }
 
+#tooltip-country-name_zh {
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
 #tooltip-population {
     display: block;
     margin-top: 6px;

@@ -68,33 +68,23 @@ function setProjection(width, height, geoData) {
     initialTranslate = projection.translate();
 }
 
-
 // 添加交互功能（改进版）
 function addInteractions() {
-    // 计算国家地理中心
-    const [[x0, y0], [x1, y1]] = d3.geoBounds(mapDataGlobal);
-    const centerX = (x0 + x1) / 2;
-    const centerY = (y0 + y1) / 2;
-    const [centerPixelX, centerPixelY] = projection([centerX, centerY]);
-
-    let transform = d3.zoomIdentity;
-
     const zoom = d3.zoom()
         .scaleExtent([ZOOM_SENSITIVITY, 8])
-        .on('zoom', function (event) {
-            transform = event.transform;
+        .on("zoom", function (event) {
+            const transform = event.transform;
 
-            // 计算相对于国家中心的偏移
-            const offsetX = centerPixelX * (1 - transform.k);
-            const offsetY = centerPixelY * (1 - transform.k);
+            // 获取当前缩放层级和偏移
+            const scale = initialScale * transform.k;
+            const translate = [
+                initialTranslate[0] * transform.k + transform.x,
+                initialTranslate[1] * transform.k + transform.y
+            ];
 
-            // 应用变换，保持国家中心为视觉中心
             projection
-                .scale(initialScale * transform.k)
-                .translate([
-                    initialTranslate[0] * transform.k + transform.x - offsetX,
-                    initialTranslate[1] * transform.k + transform.y - offsetY
-                ]);
+                .scale(scale)
+                .translate(translate);
 
             redrawMap();
         });

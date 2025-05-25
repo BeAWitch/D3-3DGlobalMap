@@ -227,6 +227,7 @@ async function drawGlobe() {
             .style("left", `${d3.event.pageX + 10}px`)
             .style("top", `${d3.event.pageY + 10}px`);
 
+        d3.select("#tooltip-country-name_zh").text(country.properties.name_zh);
         d3.select("#tooltip-country-name").text(country.properties.name);
         d3.select("#tooltip-flag").attr("src", `${FLAG_PATH}${country.id}.png`);
 
