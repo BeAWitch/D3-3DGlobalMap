@@ -111,7 +111,7 @@ function updateMap() {
     const year = dataYear;
     console.log("Initial dataType from URL:", dataType);
     const csvPath = type === "population" ? populationPath : gdpPath;
-    const fallbackPath = type === "population" ? populationPath : `data/gdp.csv`;
+    const fallbackPath = type === "population" ? `data/population.csv` : `data/gdp.csv`;
 
     d3.csv(csvPath)
         .then(data => {

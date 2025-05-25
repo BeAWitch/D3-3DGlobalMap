@@ -450,7 +450,7 @@ async function drawGlobe() {
         // 调试日志函数
 
         function restoreColors() {
-            globeSvg.selectAll(".countries path").each(function(d) {
+            globeSvg.selectAll(".countries path").each(function (d) {
                 const originalColor = originalColors.get(d.id);
                 if (originalColor) {
                     d3.select(this).style("fill", originalColor);
@@ -500,7 +500,7 @@ async function drawGlobe() {
             isGlobeRotating = false;
 
             // 存储原始颜色
-            globeSvg.selectAll(".countries path").each(function(d) {
+            globeSvg.selectAll(".countries path").each(function (d) {
                 originalColors.set(d.id, d3.select(this).style("fill"));
             });
 
@@ -520,10 +520,10 @@ async function drawGlobe() {
 
             d3.transition()
                 .duration(1200)
-                .tween("rotate", function() {
+                .tween("rotate", function () {
                     const r = d3.interpolate(rotate, targetRotation);
                     const s = d3.interpolate(geoProjection.scale(), targetScale);
-                    return function(t) {
+                    return function (t) {
                         geoProjection.rotate(r(t)).scale(s(t));
                         globeSvg.selectAll("path").attr("d", geoPathGenerator);
                         globeSvg.select("#globe").attr("r", geoProjection.scale());
@@ -659,7 +659,9 @@ document.querySelectorAll('.toggle-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const type = btn.dataset.type;
         const iframe = document.querySelector('iframe');
-        iframe.contentWindow.postMessage({ type }, '*');
+        if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage({ type }, '*');
+        }
     });
 });
 
@@ -667,7 +669,9 @@ document.querySelectorAll('.toggle-btn').forEach(btn => {
 document.getElementById('year-slider').addEventListener('input', () => {
     const year = document.getElementById('year-slider').value;
     const iframe = document.querySelector('iframe');
-    iframe.contentWindow.postMessage({ year }, '*');
+    if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({ year }, '*');
+    }
 });
 
 // 初始化
