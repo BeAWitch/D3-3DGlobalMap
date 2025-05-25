@@ -1,8 +1,8 @@
-// 常量定义
 const GEO_JSON_PATH = "data/globeCoordinates.json";
 const DATA_CSV_PATH = "data/population.csv";
 const GDP_CSV_PATH = "data/gdp.csv";
 const FLAG_PATH = "./img/flags/";
+
 
 const LOG_COLORS = [
     "#FFFFCC", // 第1档（最浅黄）
@@ -439,65 +439,15 @@ async function drawGlobe() {
         }
     }
 
-    function setupCountrySearch() {
+    function debugLog(message, data = null) {
+        console.log(`[DEBUG] ${message}`, data || '');
+    }
+    async function setupCountrySearch() {
         const searchInput = document.getElementById('country-search');
         const searchButton = document.getElementById('search-button');
         const originalColors = new Map();
-        window.debugColors = originalColors; // 暴露给全局用于调试
 
-        function searchAndRotate() {
-            const query = searchInput.value.trim().toLowerCase();
-            if (!query) return;
-
-            const matchedCountry = geoJson.features.find(country => {
-                const name = country.properties.name.toLowerCase();
-                const nameZh = (country.properties.name_zh || '').toLowerCase();
-                return name.includes(query) || nameZh.includes(query);
-            });
-
-            if (matchedCountry) {
-                if (rotationTimer) rotationTimer.stop();
-                isGlobeRotating = false;
-
-                // 存储原始颜色
-                globeSvg.selectAll(".countries path").each(function(d) {
-                    originalColors.set(d.id, d3.select(this).style("fill"));
-                });
-
-                // 应用高亮
-                globeSvg.selectAll(".countries path")
-                    .style("fill", d => d.id === matchedCountry.id
-                        ? originalColors.get(d.id)
-                        : COLOR_NO_DATA);
-
-                const centroid = d3.geoCentroid(matchedCountry);
-                const rotate = geoProjection.rotate();
-                const targetRotation = [-centroid[0], -centroid[1]];
-                const targetScale = initialScale * 3.2; // 使用初始比例乘以3.2
-
-                // 更新缩放行为，基于新的目标比例
-                globeSvg.call(configureZoom(targetScale, geoProjection));
-
-                d3.transition()
-                    .duration(1200)
-                    .tween("rotate", function() {
-                        const r = d3.interpolate(rotate, targetRotation);
-                        const s = d3.interpolate(geoProjection.scale(), targetScale);
-                        return function(t) {
-                            geoProjection.rotate(r(t)).scale(s(t));
-                            globeSvg.selectAll("path").attr("d", geoPathGenerator);
-                            globeSvg.select("#globe").attr("r", geoProjection.scale());
-                        };
-                    })
-                    .on("end", function() {
-                        setTimeout(() => {
-                            restoreColors();
-                        }, 1200);
-                    });
-            } else {
-                alert("未找到匹配的国家");
-            }
-        }
+        // 调试日志函数
 
         function restoreColors() {
             globeSvg.selectAll(".countries path").each(function(d) {
@@ -508,8 +458,144 @@ async function drawGlobe() {
             });
         }
 
+        async function handleAISearch(query) {
+            try {
+                debugLog("开始AI查询", { query });
+                searchButton.disabled = true;
+                searchButton.textContent = "AI识别中...";
+
+                const aiResponse = await queryAI(`只回答国家名称: ${query}`);
+                debugLog("AI响应结果", aiResponse);
+
+                if (!aiResponse) {
+                    throw new Error("AI未返回有效结果");
+                }
+
+                const matchedCountry = geoJson.features.find(country => {
+                    const name = country.properties.name.toLowerCase();
+                    const nameZh = (country.properties.name_zh || '').toLowerCase();
+                    const aiName = aiResponse.toLowerCase();
+                    return name === aiName || nameZh === aiName;
+                });
+
+                if (!matchedCountry) {
+                    throw new Error(`未找到匹配的国家: ${aiResponse}`);
+                }
+
+                return matchedCountry;
+            } catch (error) {
+                debugLog("AI查询出错", error);
+                alert(error.message);
+                return null;
+            } finally {
+                searchButton.disabled = false;
+                searchButton.textContent = "定位";
+            }
+        }
+
+        function highlightAndRotate(country) {
+            debugLog("开始高亮并旋转到国家", country.properties.name);
+
+            if (rotationTimer) rotationTimer.stop();
+            isGlobeRotating = false;
+
+            // 存储原始颜色
+            globeSvg.selectAll(".countries path").each(function(d) {
+                originalColors.set(d.id, d3.select(this).style("fill"));
+            });
+
+            // 应用高亮
+            globeSvg.selectAll(".countries path")
+                .style("fill", d => d.id === country.id
+                    ? originalColors.get(d.id)
+                    : COLOR_NO_DATA);
+
+            const centroid = d3.geoCentroid(country);
+            const rotate = geoProjection.rotate();
+            const targetRotation = [-centroid[0], -centroid[1]];
+            const targetScale = initialScale * 3.2;
+
+            // 更新缩放行为
+            globeSvg.call(configureZoom(targetScale, geoProjection));
+
+            d3.transition()
+                .duration(1200)
+                .tween("rotate", function() {
+                    const r = d3.interpolate(rotate, targetRotation);
+                    const s = d3.interpolate(geoProjection.scale(), targetScale);
+                    return function(t) {
+                        geoProjection.rotate(r(t)).scale(s(t));
+                        globeSvg.selectAll("path").attr("d", geoPathGenerator);
+                        globeSvg.select("#globe").attr("r", geoProjection.scale());
+                    };
+                })
+                .on("end", () => {
+                    setTimeout(restoreColors, 1200);
+                });
+        }
+
+        async function searchAndRotate() {
+            const query = searchInput.value.trim();
+            if (!query) return;
+
+            debugLog("开始搜索", { query });
+
+            // 首先尝试精确匹配
+            let matchedCountry = geoJson.features.find(country => {
+                const name = country.properties.name.toLowerCase();
+                const nameZh = (country.properties.name_zh || '').toLowerCase();
+                const queryLower = query.toLowerCase();
+                return name.includes(queryLower) || nameZh.includes(queryLower);
+            });
+
+            if (matchedCountry) {
+                highlightAndRotate(matchedCountry);
+                return;
+            }
+
+            // 精确匹配失败时使用AI
+            debugLog("精确匹配失败，尝试AI识别");
+            matchedCountry = await handleAISearch(query);
+
+            if (matchedCountry) {
+                highlightAndRotate(matchedCountry);
+            }
+        }
+
+        // 事件监听器（只绑定一次）
         searchButton.addEventListener('click', searchAndRotate);
-        searchInput.addEventListener('keypress', e => e.key === 'Enter' && searchAndRotate());
+        searchInput.addEventListener('keypress', e => {
+            if (e.key === 'Enter') searchAndRotate();
+        });
+    }
+
+    async function queryAI(question) {
+        try {
+            debugLog("调用AI API", { question });
+            const response = await fetch('http://localhost:63342/ask_ai', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ question })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API请求失败: ${response.status}`);
+            }
+
+            const data = await response.json();
+            debugLog("API响应数据", data);
+
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            return data.answer;
+        } catch (error) {
+            debugLog("API调用出错", error);
+            throw error;
+        }
     }
 
 
