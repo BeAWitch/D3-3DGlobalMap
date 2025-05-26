@@ -3,22 +3,32 @@ from flask_cors import CORS
 import dashscope
 from dashscope import Generation
 
-# 创建 Flask 应用实例
 app = Flask(__name__)
-CORS(app) # 允许跨域请求
-# CORS(app, resources={r"/ask_ai/*": {"origins": "http://localhost:3000"}}) # 允许特定来源的跨域请求
+# 修改CORS配置，允许所有来源和所有方法
+CORS(app, resources={
+    r"/ask_ai/*": {
+        "origins": "*",  # 允许所有来源
+        "methods": ["GET", "POST", "OPTIONS"],  # 允许的方法
+        "allow_headers": ["Content-Type"]  # 允许的头部
+    }
+})
 
-dashscope.api_key = "sk-3f3730796bbb4f679a400f26ca9b6aef"  # 替换为你的真实API Key
+dashscope.api_key = "sk-3f3730796bbb4f679a400f26ca9b6aef"
 
-@app.route('/ask_ai/', methods=['POST'])
+@app.route('/ask_ai/', methods=['POST', 'OPTIONS'])
 def ask_ai():
+    if request.method == 'OPTIONS':
+        # 处理预检请求
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        return response
+
     try:
         print("start ai search...")
-        
         data = request.json
         question = data.get('question', '')
 
-        # 确保问题格式正确
         if not question.startswith("只回答国家名称"):
             question = f"只回答国家名称: {question}"
 
@@ -29,7 +39,6 @@ def ask_ai():
         )
 
         if response.status_code == 200:
-            # 后处理确保只返回国家名
             answer = response.output["text"].split('\n')[0].strip()
             return jsonify({"answer": answer})
         else:
@@ -39,4 +48,4 @@ def ask_ai():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(port=63342)
+    app.run(port=8080)

@@ -464,7 +464,7 @@ async function drawGlobe() {
                 searchButton.disabled = true;
                 searchButton.textContent = "AI识别中...";
 
-                const aiResponse = await queryAI(`只回答国家名称: ${query}`);
+                const aiResponse = await queryAI(`必须回答出国家名称(如果主观问题，就以你自己的立场回答)，且只回答一个国家名称: ${query}`);
                 debugLog("AI响应结果", aiResponse);
 
                 if (!aiResponse) {
@@ -572,7 +572,7 @@ async function drawGlobe() {
     async function queryAI(question) {
         try {
             debugLog("调用AI API", { question });
-            const response = await fetch('http://localhost:63342/ask_ai/', {
+            const response = await fetch('http://localhost:8080/ask_ai/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
