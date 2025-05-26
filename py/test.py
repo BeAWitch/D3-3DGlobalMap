@@ -1,15 +1,20 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import dashscope
 from dashscope import Generation
 
 # 创建 Flask 应用实例
 app = Flask(__name__)
+CORS(app) # 允许跨域请求
+# CORS(app, resources={r"/ask_ai/*": {"origins": "http://localhost:3000"}}) # 允许特定来源的跨域请求
 
 dashscope.api_key = "sk-3f3730796bbb4f679a400f26ca9b6aef"  # 替换为你的真实API Key
 
 @app.route('/ask_ai/', methods=['POST'])
 def ask_ai():
     try:
+        print("start ai search...")
+        
         data = request.json
         question = data.get('question', '')
 

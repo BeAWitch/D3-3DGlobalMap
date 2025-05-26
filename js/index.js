@@ -572,7 +572,7 @@ async function drawGlobe() {
     async function queryAI(question) {
         try {
             debugLog("调用AI API", { question });
-            const response = await fetch('http://localhost:63342/ask_ai', {
+            const response = await fetch('http://localhost:63342/ask_ai/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
