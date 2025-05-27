@@ -1,0 +1,215 @@
+/* 重置基础样式 */
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: #000;
+    color: white;
+}
+
+/* 主容器样式 */
+#solar-container {
+    position: fixed;
+    width: 75%;
+    height: 100vh;
+    background-color: white;
+}
+
+/* Canvas 容器样式 */
+#canvas-container {
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
+    background-color: white;
+}
+
+/* 行星提示框样式 */
+#planet-tooltip {
+    position: fixed;
+    display: none;
+    background: rgba(10, 20, 30, 0.9);
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    pointer-events: none;
+    z-index: 100;
+    width: 280px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#planet-tooltip.visible {
+    opacity: 1;
+}
+
+/* 工具提示内部元素样式 */
+.tooltip-header {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.planet-name {
+    margin: 0;
+    font-size: 1.3em;
+    color: #ffcc00;
+}
+
+.planet-type {
+    font-size: 0.8em;
+    opacity: 0.8;
+    color: #a0c4ff;
+}
+
+.tooltip-content {
+    font-size: 0.9em;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.info-label {
+    color: #a0c4ff;
+    font-weight: 500;
+}
+
+.info-value {
+    text-align: right;
+}
+
+/* 信息面板样式 */
+#info-panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 25%;
+    height: 100vh;
+    padding: 15px;
+    background: white;
+    box-shadow: -2px 0 12px rgba(0, 0, 0, 0.08);
+    overflow-y: auto;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#panel-title {
+    font-size: 1.3em;
+    font-weight: 800;
+    color: #5c1010;
+    text-align: center;
+}
+
+/* 控制组样式 */
+.control-group {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.control-group h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #5c1010;
+    font-size: 1.1em;
+}
+
+.control-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.control-item label {
+    font-size: 0.95em;
+    color: #666;
+}
+
+/* 开关样式 */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #5c1010;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* 滑块样式 */
+#speed-control {
+    width: 100%;
+    height: 6px;
+    -webkit-appearance: none;
+    background: linear-gradient(to right, #e0e0e0, #5c1010);
+    border-radius: 3px;
+    cursor: pointer;
+    margin: 12px 0;
+}
+
+#speed-value {
+    font-size: 0.9em;
+    color: #5c1010;
+    font-weight: bold;
+    min-width: 40px;
+}
+
+/* 世界容器样式 */
+#world-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
+    background: #000;
+}
+
+#world-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}

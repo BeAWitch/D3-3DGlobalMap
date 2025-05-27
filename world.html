@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="World Population Visualization">
+    <link rel="stylesheet" href="css/world.css">
+    <title>World Population</title>
+    <link rel="icon" href="img/globe.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+<div class="main-container">
+    <!-- 左侧3/4区域 - 地球SVG -->
+    <div class="left-panel">
+        <div id="globe-container"></div>
+    </div>
+
+    <!-- 右侧1/4区域 - 控制面板 -->
+    <div class="right-panel">
+        <div class="data-toggle">
+            <button class="toggle-btn active" data-type="population">人口</button>
+            <button class="toggle-btn" data-type="gdp">GDP</button>
+        </div>
+        <h1 id="page-title">World Population</h1>
+        <div id="color-scale"></div>
+        <div id="legend-container"></div>
+        <div class="search-box">
+            <input type="text" id="country-search" placeholder="支持中/英文和ai智能查询">
+            <button id="search-button">定位</button>
+        </div>
+        <div class="search-control">
+            <label>自定范围:</label>
+            <div class="range-columns">
+                <div class="range-column">
+                    <input type="number" id="min-value" placeholder="最小值">
+                    <button id="apply-range">搜索</button>
+                </div>
+                <span class="range-to">至</span>
+                <div class="range-column">
+                    <input type="number" id="max-value" placeholder="最大值">
+                    <button id="reset-range">重置</button>
+                </div>
+            </div>
+        </div>
+        <div id="timeline-container">
+            <div class="play-control">
+                <button id="play-button" aria-label="播放/暂停">
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <path id="play-icon" fill="currentColor" d="M8 5v14l11-7z" />
+                    </svg>
+                </button>
+                <div class="speed-control-wrapper">
+                    <input type="range" id="play-speed" min="0" max="100" value="0">
+                    <span id="speed-display">1.0x</span>
+                </div>
+            </div>
+            <input type="range" id="year-slider" min="1960" max="2053" value="2023" step="1">
+            <div id="year-display">2023</div>
+        </div>
+        <div class="speed-control">
+            <label for="rotation-speed">旋转速度</label>
+            <input type="range" id="rotation-speed" min="0" max="100" value="50">
+        </div>
+    </div>
+</div>
+
+<div id="tooltip" style="display: none;">
+    <div id="name-flag-container">
+        <b><span id="tooltip-country-name_zh"></span></b>
+        <b><span id="tooltip-country-name"></span></b>
+        <img id="tooltip-flag">
+    </div>
+    <br/>
+    <div class="tooltip-coord">
+        <div><span id="tooltip-min-lon"></span> - <span id="tooltip-max-lon"></span></div>
+        <div><span id="tooltip-min-lat"></span> - <span id="tooltip-max-lat"></span></div>
+    </div>
+    <span id="tooltip-population"></span>
+</div>
+
+<template id="detail-tooltip-template">
+    <div class="map-modal">
+        <div class="modal-header" style="background: white; color: #5c1010;">
+            <h3 class="modal-title"></h3>
+            <button class="close-btn" style="color: #5c1010;">&times;</button>
+        </div>
+        <div class="iframe-container" style="width:100%; height:calc(100% - 50px);">
+            <iframe style="width:100%; height:100%; border:none;"></iframe>
+        </div>
+    </div>
+</template>
+
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="js/world.js" defer></script>
+</body>
+
+</html>
