@@ -29,7 +29,7 @@ let GLOBE_RADIUS = GLOBE_HEIGHT / 2.8;
 let GLOBE_CENTER = [GLOBE_WIDTH / 2, GLOBE_HEIGHT / 2];
 
 const ROTATION_SENSITIVITY = 60;
-const ZOOM_SENSITIVITY = 0.5;
+const ZOOM_SENSITIVITY = 0.3;
 let rotationTimer;
 let isGlobeRotating = true;
 
