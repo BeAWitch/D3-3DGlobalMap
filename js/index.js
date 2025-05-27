@@ -78,14 +78,26 @@ async function drawGlobe() {
         const type = this.dataset.type;
         if (type === currentDataType) return;
 
+        // 保存当前年份
+        const currentYear = yearSlider.value;
+
         d3.selectAll(".toggle-btn").classed("active", false);
         d3.select(this).classed("active", true);
 
         currentDataType = type;
         currentData = type === "population" ? populationData : gdpData;
         updateLogScale(currentData);
-        updateYearRange(currentData);
-        yearSlider.dispatchEvent(new Event('input'));
+
+        // 更新范围但不重置年份
+        const [minYear, maxYear] = d3.extent(currentData, d => +d.Year);
+        yearSlider.min = minYear;
+        yearSlider.max = maxYear;
+
+        // 确保当前年份在新范围内
+        yearSlider.value = Math.min(Math.max(currentYear, minYear), maxYear);
+
+        // 手动触发更新（不自动跳转）
+        handleYearSliderInput.call(yearSlider);
     }
 
     // 更新年份范围
@@ -336,12 +348,23 @@ async function drawGlobe() {
     // 滑块事件
     function handleYearSliderInput() {
         const selectedYear = this.value;
-        yearDisplay.textContent = selectedYear;
+        const isPrediction = selectedYear > 2023;
+        const isGDP = currentDataType === "gdp"; // 新增判断当前数据类型
+
+        // 根据数据类型显示不同的预测标签
+        if (isPrediction) {
+            yearDisplay.textContent = isGDP
+                ? `${selectedYear} (经济学模型预测)`
+                : `${selectedYear} (三次多项式回归预测)`;
+        } else {
+            yearDisplay.textContent = selectedYear;
+        }
 
         filteredData = currentData.filter(d => d.Year === selectedYear);
 
+        // 更新标题时也区分数据类型
         d3.select("#page-title").text(
-            currentDataType === "population" ? "世界人口" : "世界GDP(美元)"
+            isGDP ? "世界GDP(美元)" : "世界人口"
         );
 
         drawLegend();
@@ -427,10 +450,20 @@ async function drawGlobe() {
             const yearSlider = document.getElementById('year-slider');
             if (+yearSlider.value < +yearSlider.max) {
                 yearSlider.value = +yearSlider.value + 1;
+                const isPrediction = yearSlider.value > 2023;
+                const isGDP = currentDataType === "gdp"; // 新增判断
+
+                if (isPrediction) {
+                    yearDisplay.textContent = isGDP
+                        ? `${yearSlider.value} (经济学模型预测)`
+                        : `${yearSlider.value} (三次多项式回归预测)`;
+                } else {
+                    yearDisplay.textContent = yearSlider.value;
+                }
+
                 yearSlider.dispatchEvent(new Event('input'));
                 lastTimestamp = timestamp;
             } else {
-                // 到达最后一年时停止播放
                 togglePlay();
             }
         }
