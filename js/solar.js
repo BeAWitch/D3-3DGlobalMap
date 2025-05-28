@@ -12,7 +12,6 @@ container.appendChild(renderer.domElement);
 const textureLoader = new THREE.TextureLoader();
 
 // 加载所有星球纹理
-const starTexture = textureLoader.load("./image/stars.jpg");
 const sunTexture = textureLoader.load("./image/sun.jpg");
 const mercuryTexture = textureLoader.load("./image/mercury.jpg");
 const venusTexture = textureLoader.load("./image/venus.jpg");
@@ -31,84 +30,233 @@ const tooltip = document.getElementById('planet-tooltip');
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let hoveredPlanet = null;
-let mouseClicked = false; // 添加鼠标点击状态
+let mouseClicked = false;
 
 // 星球信息数据
 const planetInfo = {
   'sun': {
     name: '太阳',
+    type: '恒星',
     diameter: '1,392,700 km',
-    mass: '1.989 × 10^30 kg',
-    distance: '中心',
-    facts: '太阳占太阳系总质量的99.86%'
+    mass: '1.989 × 10³⁰ kg',
+    distance: '太阳系中心',
+    temperature: '5,500°C (表面) / 15,000,000°C (核心)',
+    gravity: '28.02 g',
+    rotation: '25.05天 (赤道) / 34.4天 (极地)',
+    facts: '太阳占太阳系总质量的99.86%',
+    features: [
+      '太阳核心每秒钟将约6亿吨氢聚变为氦',
+      '太阳风影响范围可达冥王星轨道之外',
+      '太阳年龄约46亿年，还有约50亿年寿命'
+    ],
+    composition: '氢(73%)、氦(25%)、其他元素(2%)'
   },
   'mercury': {
     name: '水星',
+    type: '类地行星',
     diameter: '4,880 km',
-    mass: '3.3011 × 10^23 kg',
+    mass: '3.3011 × 10²³ kg',
     distance: '5,790万 km',
-    facts: '水星上的一年只有88个地球日'
+    temperature: '-173°C 到 427°C',
+    gravity: '0.38 g',
+    rotation: '58.6地球日',
+    orbit: '88地球日',
+    facts: '水星上的一年只有88个地球日',
+    features: [
+      '太阳系中最小的行星',
+      '昼夜温差最大的行星',
+      '表面布满陨石坑，类似月球'
+    ],
+    moons: 0,
+    rings: false
   },
   'venus': {
     name: '金星',
+    type: '类地行星',
     diameter: '12,104 km',
-    mass: '4.8675 × 10^24 kg',
+    mass: '4.8675 × 10²⁴ kg',
     distance: '1.082亿 km',
-    facts: '金星是太阳系中最热的行星'
+    temperature: '462°C (平均)',
+    gravity: '0.91 g',
+    rotation: '243地球日 (逆行)',
+    orbit: '225地球日',
+    facts: '金星是太阳系中最热的行星',
+    features: [
+      '自转方向与其他行星相反',
+      '大气压力是地球的92倍',
+      '拥有最长的自转周期'
+    ],
+    atmosphere: '二氧化碳(96.5%)、氮气(3.5%)',
+    moons: 0,
+    rings: false
   },
   'earth': {
     name: '地球',
+    type: '类地行星',
     diameter: '12,742 km',
-    mass: '5.972 × 10^24 kg',
-    distance: '1.496亿 km',
-    facts: '地球是已知唯一支持生命的行星'
+    mass: '5.972 × 10²⁴ kg',
+    distance: '1.496亿 km (1 AU)',
+    temperature: '-89°C 到 58°C',
+    gravity: '1 g',
+    rotation: '23小时56分4秒',
+    orbit: '365.25天',
+    facts: '地球是已知唯一支持生命的行星',
+    features: [
+      '表面71%被水覆盖',
+      '拥有强大的磁场保护生命免受太阳辐射',
+      '唯一有板块构造的行星'
+    ],
+    atmosphere: '氮气(78%)、氧气(21%)、其他(1%)',
+    moons: 1,
+    rings: false,
+    life: '已知唯一有生命的行星'
   },
   'mars': {
     name: '火星',
+    type: '类地行星',
     diameter: '6,779 km',
-    mass: '6.417 × 10^23 kg',
+    mass: '6.417 × 10²³ kg',
     distance: '2.279亿 km',
-    facts: '火星拥有太阳系中最大的沙尘暴'
+    temperature: '-140°C 到 20°C',
+    gravity: '0.38 g',
+    rotation: '24小时37分',
+    orbit: '687地球日',
+    facts: '火星拥有太阳系中最大的沙尘暴',
+    features: [
+      '拥有太阳系最高的火山 - 奥林匹斯山',
+      '有四季变化，类似地球',
+      '曾经可能有液态水'
+    ],
+    atmosphere: '二氧化碳(95%)、氮气(3%)、氩气(2%)',
+    moons: 2,
+    rings: false,
+    exploration: '目前有多个探测器在火星工作'
   },
   'jupiter': {
     name: '木星',
+    type: '气态巨行星',
     diameter: '139,820 km',
-    mass: '1.898 × 10^27 kg',
+    mass: '1.898 × 10²⁷ kg',
     distance: '7.785亿 km',
-    facts: '木星是太阳系中自转最快的行星'
+    temperature: '-108°C (云顶)',
+    gravity: '2.53 g',
+    rotation: '9小时55分',
+    orbit: '11.86地球年',
+    facts: '木星是太阳系中自转最快的行星',
+    features: [
+      '太阳系最大的行星',
+      '拥有强大的磁场和辐射带',
+      '大红斑是一个持续数百年的风暴'
+    ],
+    atmosphere: '氢(90%)、氦(10%)',
+    moons: 79,
+    rings: true,
+    special: '可以看作一个"失败的恒星"'
   },
   'saturn': {
     name: '土星',
+    type: '气态巨行星',
     diameter: '116,460 km',
-    mass: '5.683 × 10^26 kg',
+    mass: '5.683 × 10²⁶ kg',
     distance: '14.34亿 km',
-    facts: '土星拥有超过80颗卫星'
+    temperature: '-139°C (云顶)',
+    gravity: '1.07 g',
+    rotation: '10小时33分',
+    orbit: '29.46地球年',
+    facts: '土星拥有超过80颗卫星',
+    features: [
+      '拥有壮观的行星环系统',
+      '密度比水还低，可以浮在水上',
+      '拥有六边形的极地风暴'
+    ],
+    atmosphere: '氢(96%)、氦(3%)',
+    moons: 83,
+    rings: true,
+    ringDetails: '主要由冰和岩石颗粒组成'
   },
   'uranus': {
     name: '天王星',
+    type: '冰巨星',
     diameter: '50,724 km',
-    mass: '8.681 × 10^25 kg',
+    mass: '8.681 × 10²⁵ kg',
     distance: '28.71亿 km',
-    facts: '天王星是侧向自转的行星'
+    temperature: '-197°C (云顶)',
+    gravity: '0.89 g',
+    rotation: '17小时14分 (逆行)',
+    orbit: '84.01地球年',
+    facts: '天王星是侧向自转的行星',
+    features: [
+      '自转轴倾斜98°，几乎是躺着转',
+      '大气层含有大量甲烷，呈现蓝色',
+      '拥有暗淡的行星环'
+    ],
+    atmosphere: '氢(83%)、氦(15%)、甲烷(2%)',
+    moons: 27,
+    rings: true,
+    discovery: '1781年由威廉·赫歇尔发现'
   },
   'neptune': {
     name: '海王星',
+    type: '冰巨星',
     diameter: '49,244 km',
-    mass: '1.024 × 10^26 kg',
+    mass: '1.024 × 10²⁶ kg',
     distance: '44.95亿 km',
-    facts: '海王星拥有太阳系中最强的风暴'
+    temperature: '-201°C (云顶)',
+    gravity: '1.14 g',
+    rotation: '16小时6分',
+    orbit: '164.8地球年',
+    facts: '海王星拥有太阳系中最强的风暴',
+    features: [
+      '通过数学预测而非观测发现的行星',
+      '风速可达2100 km/h',
+      '拥有活跃的天气系统'
+    ],
+    atmosphere: '氢(80%)、氦(19%)、甲烷(1%)',
+    moons: 14,
+    rings: true,
+    exploration: '仅有旅行者2号在1989年近距离探测过'
   }
 };
 
 const scene = new THREE.Scene();
 
-// 设置星空背景
+// 设置星空背景 - 修改后的立方体贴图加载方式
 const cubeTextureLoader = new THREE.CubeTextureLoader();
 const cubeTexture = cubeTextureLoader.load([
-  starTexture, starTexture, starTexture,
-  starTexture, starTexture, starTexture
+  './image/stars.jpg', // 右
+  './image/stars.jpg', // 左
+  './image/stars.jpg', // 上
+  './image/stars.jpg', // 下
+  './image/stars.jpg', // 前
+  './image/stars.jpg'  // 后
 ]);
+
+// 增强星空效果
+cubeTexture.encoding = THREE.sRGBEncoding; // 使用sRGB色彩空间
+cubeTexture.anisotropy = renderer.capabilities.getMaxAnisotropy(); // 启用各向异性过滤
+
 scene.background = cubeTexture;
+
+// 添加更多星星效果
+const starGeometry = new THREE.BufferGeometry();
+const starMaterial = new THREE.PointsMaterial({
+  color: 0xffffff,
+  size: 1,
+  transparent: true,
+  opacity: 0.8
+});
+
+const starVertices = [];
+for (let i = 0; i < 10000; i++) {
+  const x = (Math.random() - 0.5) * 2000;
+  const y = (Math.random() - 0.5) * 2000;
+  const z = (Math.random() - 0.5) * 2000;
+  starVertices.push(x, y, z);
+}
+
+starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+const stars = new THREE.Points(starGeometry, starMaterial);
+scene.add(stars);
 
 // 设置透视相机
 const camera = new THREE.PerspectiveCamera(
@@ -121,12 +269,16 @@ camera.position.set(-50, 90, 150);
 
 // 轨道控制器
 const orbit = new OrbitControls(camera, renderer.domElement);
+orbit.autoRotate = true;
+orbit.autoRotateSpeed = 2.0;
+orbit.enableDamping = true;
+orbit.dampingFactor = 0.05;
 
 // 创建太阳
 const sungeo = new THREE.SphereGeometry(15, 50, 50);
 const sunMaterial = new THREE.MeshBasicMaterial({ map: sunTexture });
 const sun = new THREE.Mesh(sungeo, sunMaterial);
-sun.name = 'sun'; // 为太阳添加名称标识
+sun.name = 'sun';
 scene.add(sun);
 
 // 太阳光源
@@ -260,11 +412,12 @@ planets.forEach(planet => {
   planet.planet.name = planet.name;
 });
 
-// 添加新的控制变量
+// 添加控制变量
 const controls = {
   realisticView: true,
   showOrbits: true,
-  speed: 1
+  speed: 1,
+  currentView: 'top'
 };
 
 // 获取控制元素
@@ -272,12 +425,14 @@ const realisticViewToggle = document.getElementById('realistic-view');
 const showOrbitsToggle = document.getElementById('show-orbits');
 const speedControl = document.getElementById('speed-control');
 const speedValue = document.getElementById('speed-value');
+const viewPresets = document.getElementById('view-presets');
 
 // 初始化控制状态
 realisticViewToggle.checked = controls.realisticView;
 showOrbitsToggle.checked = controls.showOrbits;
 speedControl.value = controls.speed;
 speedValue.textContent = `${controls.speed.toFixed(1)}x`;
+viewPresets.value = controls.currentView;
 
 // 添加事件监听
 realisticViewToggle.addEventListener('change', (e) => {
@@ -295,6 +450,28 @@ showOrbitsToggle.addEventListener('change', (e) => {
 speedControl.addEventListener('input', (e) => {
   controls.speed = parseFloat(e.target.value);
   speedValue.textContent = `${controls.speed.toFixed(1)}x`;
+});
+
+// 预设视角切换
+viewPresets.addEventListener('change', (e) => {
+  controls.currentView = e.target.value;
+
+  switch(controls.currentView) {
+    case 'top': // 太阳系俯视图
+      camera.position.set(0, 300, 0);
+      camera.lookAt(0, 0, 0);
+      break;
+
+    case 'ecliptic': // 黄道平面
+      camera.position.set(0, 0, 200);
+      camera.lookAt(0, 0, 0);
+      break;
+
+    case 'side': // 侧面视角
+      camera.position.set(200, 100, 0);
+      camera.lookAt(0, 0, 0);
+      break;
+  }
 });
 
 // 设置初始状态
@@ -326,7 +503,10 @@ document.getElementById('close-world').addEventListener('click', () => {
 });
 
 // 动画循环
-function animate(time) {
+function animate() {
+  // 更新轨道控制器
+  orbit.update();
+
   // 更新射线检测
   raycaster.setFromCamera(mouse, camera);
 
@@ -341,6 +521,8 @@ function animate(time) {
     const planet = intersects[0].object;
     if (planet.name && planet.name !== hoveredPlanet) {
       hoveredPlanet = planet.name;
+      orbit.enabled = false;
+      orbit.autoRotate = false;
 
       // 获取行星在屏幕上的位置
       const planetPosition = planet.getWorldPosition(new THREE.Vector3());
@@ -357,32 +539,63 @@ function animate(time) {
       const info = planetInfo[planet.name];
       if (info) {
         tooltip.innerHTML = `
-          <div class="tooltip-header">
-            <h3 class="planet-name">${info.name}</h3>
-            <div class="planet-type">行星</div>
-          </div>
-          <div class="tooltip-content">
-            <div class="info-row">
-              <span class="info-label">直径:</span>
-              <span class="info-value">${info.diameter}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">质量:</span>
-              <span class="info-value">${info.mass}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">与太阳距离:</span>
-              <span class="info-value">${info.distance}</span>
-            </div>
-            <div class="fun-fact">
-              <span class="fact-icon">✨</span>
-              <span>${info.facts}</span>
-            </div>
-          </div>
-        `;
+    <div class="tooltip-header">
+      <h3 class="planet-name">
+        ${info.name}
+        <span class="planet-type">${info.type}</span>
+      </h3>
+    </div>
+    <div class="tooltip-content">
+      <div class="info-row">
+        <div class="info-icon">🌐</div>
+        <div class="info-label">直径</div>
+        <div class="info-value">${info.diameter}</div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">⚖️</div>
+        <div class="info-label">质量</div>
+        <div class="info-value">${info.mass}</div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">📏</div>
+        <div class="info-label">与太阳距离</div>
+        <div class="info-value">${info.distance}</div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">🌡️</div>
+        <div class="info-label">温度</div>
+        <div class="info-value">${info.temperature}</div>
+      </div>
+      
+      <div class="feature-block">
+        <div class="feature-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+          </svg>
+          特色事实
+        </div>
+        <div class="feature-text">${info.facts}</div>
+      </div>
+      
+      <div class="planet-status">
+        <div class="status-item">
+          <div class="status-value">${info.moons}</div>
+          <div class="status-label">卫星</div>
+        </div>
+        <div class="status-item">
+          <div class="status-value">${info.rings ? '有' : '无'}</div>
+          <div class="status-label">行星环</div>
+        </div>
+        <div class="status-item">
+          <div class="status-value">${info.gravity}</div>
+          <div class="status-label">重力</div>
+        </div>
+      </div>
+    </div>
+  `;
 
         tooltip.style.display = 'block';
-        tooltip.style.left = `${x + 20}px`; // 添加偏移量，避免遮挡
+        tooltip.style.left = `${x + 20}px`;
         tooltip.style.top = `${y}px`;
         tooltip.classList.add('visible');
       }
@@ -390,8 +603,6 @@ function animate(time) {
 
     // 检查地球点击
     if (mouseClicked && planet.name === 'earth') {
-      console.log("[DEBUG] Earth clicked!");
-
       const worldContainer = document.getElementById('world-container');
       const worldIframe = document.getElementById('world-iframe');
 
@@ -407,6 +618,9 @@ function animate(time) {
     }
   } else if (hoveredPlanet) {
     hoveredPlanet = null;
+    orbit.enabled = true;
+    orbit.autoRotate = true;
+
     tooltip.classList.remove('visible');
     setTimeout(() => {
       if (!hoveredPlanet) {
@@ -415,7 +629,7 @@ function animate(time) {
     }, 300);
   }
 
-  // 重置点击状态（如果没有点击任何行星）
+  // 重置点击状态
   if (mouseClicked) {
     mouseClicked = false;
   }
