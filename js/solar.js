@@ -12,13 +12,13 @@ container.appendChild(renderer.domElement);
 const textureLoader = new THREE.TextureLoader();
 
 // 加载所有星球纹理
-const sunTexture = textureLoader.load("./image/sun.jpg");
+const sunTexture = textureLoader.load("./image/sun.png");
 const mercuryTexture = textureLoader.load("./image/mercury.jpg");
 const venusTexture = textureLoader.load("./image/venus.jpg");
-const earthTexture = textureLoader.load("./image/earth.jpg");
+const earthTexture = textureLoader.load("./image/earth.png");
 const marsTexture = textureLoader.load("./image/mars.jpg");
 const jupiterTexture = textureLoader.load("./image/jupiter.jpg");
-const saturnTexture = textureLoader.load("./image/saturn.jpg");
+const saturnTexture = textureLoader.load("./image/saturn.png");
 const uranusTexture = textureLoader.load("./image/uranus.jpg");
 const neptuneTexture = textureLoader.load("./image/neptune.jpg");
 const plutoTexture = textureLoader.load("./image/pluto.jpg");
@@ -572,7 +572,7 @@ function animate() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
           </svg>
-          特色事实
+          特点
         </div>
         <div class="feature-text">${info.facts}</div>
       </div>
