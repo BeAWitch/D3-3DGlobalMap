@@ -516,3 +516,38 @@ body {
     margin-top: 4px;
     text-align: center;
 }
+
+.gesture-control {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.gesture-btn {
+    padding: 8px 12px;
+    background-color: #5C1010;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Noto Sans SC', sans-serif;
+    transition: background-color 0.3s;
+}
+
+.gesture-btn:hover {
+    background-color: #7a1a1a;
+}
+
+.gesture-btn.enabled {
+    background-color: #1f7a1f;
+}
+
+.gesture-btn.enabled:hover {
+    background-color: #2a8b2a;
+}
+
+.gesture-btn.disabled {
+    background-color: #B2B2B2;
+    cursor: not-allowed;
+}

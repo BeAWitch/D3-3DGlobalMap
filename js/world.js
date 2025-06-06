@@ -43,6 +43,11 @@ let playSpeed = 350;
 let lastTimestamp;
 let animationFrameId;
 
+let gestureControlEnabled = false;
+let gestureCheckInterval;
+const GESTURE_CHECK_INTERVAL = 800;
+const GESTURE_EXPIRE_TIME = 1800;
+
 // 主函数
 async function drawGlobe() {
     const [geoJson, populationData, gdpData] = await Promise.all([
@@ -472,6 +477,108 @@ async function drawGlobe() {
         }
     }
 
+    function setupGestureControl() {
+        const gestureToggleBtn = document.getElementById('gesture-toggle-btn');
+
+        // 初始状态检查
+        checkGestureServiceAvailability();
+
+        // 切换手势控制状态
+        gestureToggleBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch('http://localhost:5000/gesture/toggle', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                gestureControlEnabled = data.enabled;
+
+                // 更新按钮状态
+                gestureToggleBtn.textContent = gestureControlEnabled ? '禁用手势控制' : '启用手势控制';
+                gestureToggleBtn.classList.toggle('enabled', gestureControlEnabled);
+
+                if (gestureControlEnabled) {
+                    startGestureChecking();
+                    console.log('手势控制已启用');
+                } else {
+                    stopGestureChecking();
+                    console.log('手势控制已禁用');
+                }
+            } catch (error) {
+                console.error('切换手势控制状态失败:', error);
+                gestureToggleBtn.textContent = '服务不可用';
+                gestureToggleBtn.classList.add('disabled');
+                alert('无法连接到手势控制服务，请确保gesture.py正在运行');
+            }
+        });
+    }
+
+    async function checkGestureServiceAvailability() {
+        const gestureToggleBtn = document.getElementById('gesture-toggle-btn');
+        try {
+            const response = await fetch('http://localhost:5000/gesture/status');
+            if (response.ok) {
+                console.log('手势控制服务已就绪');
+                gestureToggleBtn.disabled = false;
+            } else {
+                throw new Error('服务响应不正常');
+            }
+        } catch (error) {
+            console.warn('手势控制服务不可用:', error);
+            gestureToggleBtn.disabled = true;
+            gestureToggleBtn.textContent = '手势服务未运行';
+            gestureToggleBtn.classList.add('disabled');
+        }
+    }
+
+    function startGestureChecking() {
+        if (gestureCheckInterval) clearInterval(gestureCheckInterval);
+        gestureCheckInterval = setInterval(checkGesture, GESTURE_CHECK_INTERVAL);
+    }
+
+    function stopGestureChecking() {
+        if (gestureCheckInterval) clearInterval(gestureCheckInterval);
+    }
+
+    async function checkGesture() {
+        try {
+            const response = await fetch('http://localhost:5000/gesture/status');
+            const data = await response.json();
+
+            // 检查手势是否有效（在有效期内）
+            if (data.last_gesture && (Date.now() / 1000 - data.last_gesture_time) < (GESTURE_EXPIRE_TIME / 1000)) {
+                handleGesture(data.last_gesture);
+            }
+        } catch (error) {
+            console.error('检查手势状态失败:', error);
+        }
+    }
+
+    function handleGesture(gesture) {
+        console.log(`处理手势: ${gesture}`);
+
+        // 获取当前缩放比例
+        const currentScale = geoProjection.scale();
+        const initialScale = GLOBE_RADIUS;
+        const zoomFactor = 1.1; // 缩放因子
+
+        if (gesture === 'Five') {
+            // 放大 - 限制最大缩放级别
+            const newScale = Math.min(currentScale * zoomFactor, initialScale * 10);
+            geoProjection.scale(newScale);
+            console.log(`放大到: ${newScale}`);
+        } else if (gesture === 'Fist') {
+            // 缩小 - 限制最小缩放级别
+            const newScale = Math.max(currentScale / zoomFactor, initialScale * 0.5);
+            geoProjection.scale(newScale);
+            console.log(`缩小到: ${newScale}`);
+        }
+
+        // 更新地球显示
+        globeSvg.selectAll("path").attr("d", geoPathGenerator);
+        globeSvg.select("#globe").attr("r", geoProjection.scale());
+    }
+
+
     function debugLog(message, data = null) {
         console.log(`[DEBUG] ${message}`, data || '');
     }
@@ -667,6 +774,8 @@ async function drawGlobe() {
 
     document.getElementById("apply-range").addEventListener("click", handleApplyRange);
     document.getElementById("reset-range").addEventListener("click", handleResetRange);
+
+    setupGestureControl();
 
     // 添加按空格暂停逻辑
     document.addEventListener('keydown', function (event) {
