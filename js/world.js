@@ -45,8 +45,15 @@ let animationFrameId;
 
 let gestureControlEnabled = false;
 let gestureCheckInterval;
-const GESTURE_CHECK_INTERVAL = 800;
-const GESTURE_EXPIRE_TIME = 1800;
+// 手势控制相关常量
+const GESTURE_CHECK_INTERVAL = 200;
+const GESTURE_EXPIRE_TIME = 500; // 从1800ms缩短到500ms
+const GESTURE_HOLD_THRESHOLD = 300; // 手势保持300ms才触发
+
+// 手势拖动参数
+const DRAG_SENSITIVITY = 1.2; // 拖动灵敏度
+let isDragging = false;
+let dragStartPosition = [0, 0];
 
 // 主函数
 async function drawGlobe() {
@@ -541,42 +548,190 @@ async function drawGlobe() {
 
     async function checkGesture() {
         try {
-            const response = await fetch('http://localhost:5000/gesture/status');
+            const response = await fetch('http://localhost:5000/gesture/current');
             const data = await response.json();
 
-            // 检查手势是否有效（在有效期内）
-            if (data.last_gesture && (Date.now() / 1000 - data.last_gesture_time) < (GESTURE_EXPIRE_TIME / 1000)) {
-                handleGesture(data.last_gesture);
+            if (!data.gestures || data.gestures.length === 0) {
+                isDragging = false;
+                return;
             }
+
+            // 处理手势
+            handleGesture(data.gestures, data.directions);
+
         } catch (error) {
-            console.error('检查手势状态失败:', error);
+            console.error('获取手势状态失败:', error);
+            isDragging = false;
         }
     }
 
-    function handleGesture(gesture) {
-        console.log(`处理手势: ${gesture}`);
+    function handleGesture(gestures, directions) {
+        console.log('Received gestures:', gestures, 'Directions:', directions);
+        updateGestureFeedback(gestures, directions);
 
-        // 获取当前缩放比例
-        const currentScale = geoProjection.scale();
-        const initialScale = GLOBE_RADIUS;
-        const zoomFactor = 1.1; // 缩放因子
+        // 双手手势处理
+        if (gestures.length === 2) {
+            // 双手Five - 放大
+            if (gestures[0] === 'Five' && gestures[1] === 'Five') {
+                const currentScale = geoProjection.scale();
+                const targetScale = currentScale * 1.1;
+                d3.transition()
+                    .duration(300) // 300毫秒的过渡动画
+                    .tween("scale", function() {
+                        const interpolate = d3.interpolate(currentScale, targetScale);
+                        return function(t) {
+                            geoProjection.scale(interpolate(t));
+                            globeSvg.selectAll("path").attr("d", geoPathGenerator);
+                            globeSvg.select("#globe").attr("r", geoProjection.scale());
+                        };
+                    });
+                return;
+            }
 
-        if (gesture === 'Five') {
-            // 放大 - 限制最大缩放级别
-            const newScale = Math.min(currentScale * zoomFactor, initialScale * 10);
-            geoProjection.scale(newScale);
-            console.log(`放大到: ${newScale}`);
-        } else if (gesture === 'Fist') {
-            // 缩小 - 限制最小缩放级别
-            const newScale = Math.max(currentScale / zoomFactor, initialScale * 0.5);
-            geoProjection.scale(newScale);
-            console.log(`缩小到: ${newScale}`);
+            // 双手Fist - 缩小
+            if (gestures[0] === 'Fist' && gestures[1] === 'Fist') {
+                const currentScale = geoProjection.scale();
+                const targetScale = currentScale * 0.9;
+
+                d3.transition()
+                    .duration(300)
+                    .tween("scale", function() {
+                        const interpolate = d3.interpolate(currentScale, targetScale);
+                        return function(t) {
+                            geoProjection.scale(interpolate(t));
+                            globeSvg.selectAll("path").attr("d", geoPathGenerator);
+                            globeSvg.select("#globe").attr("r", geoProjection.scale());
+                        };
+                    });
+                return;
+            }
+
+
         }
 
-        // 更新地球显示
-        globeSvg.selectAll("path").attr("d", geoPathGenerator);
-        globeSvg.select("#globe").attr("r", geoProjection.scale());
+        // 单手手势处理
+        if (gestures.length === 1) {
+            const gesture = gestures[0];
+            const direction = directions ? directions[0] : null;
+
+            // 单手Fist - 暂停旋转
+            if (gesture === 'Fist') {
+                if (rotationTimer) rotationTimer.stop();
+                isGlobeRotating = false;
+                return;
+            }
+
+            // 保留Point手势的上下左右控制
+            if (gesture === 'Point' && direction) {
+                let targetRotationSpeed = 0;
+                switch(direction) {
+                    case 'Up':
+                        targetRotationSpeed = -0.5; // 向上旋转（负Y轴）
+                        break;
+                    case 'Down':
+                        targetRotationSpeed = 0.5; // 向下旋转（正Y轴）
+                        break;
+                    case 'Left':
+                        targetRotationSpeed = -0.5; // 向左旋转（负X轴）
+                        break;
+                    case 'Right':
+                        targetRotationSpeed = 0.5; // 向右旋转（正X轴）
+                        break;
+                }
+
+                // 应用旋转
+                rotationSpeed = targetRotationSpeed;
+                if (!isGlobeRotating) {
+                    isGlobeRotating = true;
+                }
+
+                // 停止现有旋转并启动新旋转
+                if (rotationTimer) rotationTimer.stop();
+                rotationTimer = d3.timer(elapsed => {
+                    const rotate = geoProjection.rotate();
+                    // 根据方向决定旋转轴
+                    if (direction === 'Up' || direction === 'Down') {
+                        // 上下方向：绕X轴旋转
+                        geoProjection.rotate([rotate[0], rotate[1] + rotationSpeed]);
+                    } else {
+                        // 左右方向：绕Y轴旋转
+                        geoProjection.rotate([rotate[0] + rotationSpeed, rotate[1]]);
+                    }
+                    globeSvg.selectAll("path").attr("d", geoPathGenerator);
+                });
+            }
+        }
     }
+
+    function setupGestureControl() {
+        const gestureToggleBtn = document.getElementById('gesture-toggle-btn');
+
+        // 初始状态检查
+        checkGestureServiceAvailability();
+
+        // 切换手势控制状态
+        gestureToggleBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch('http://localhost:5000/gesture/toggle', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                gestureControlEnabled = data.enabled;
+
+                // 更新按钮状态
+                gestureToggleBtn.classList.toggle('enabled', gestureControlEnabled);
+
+                if (gestureControlEnabled) {
+                    startGestureChecking();
+                    gestureToggleBtn.textContent = '手势控制已启用';
+                    console.log('手势控制已启用');
+                } else {
+                    stopGestureChecking();
+                    gestureToggleBtn.textContent = '启用手势控制';
+                    console.log('手势控制已禁用');
+                }
+            } catch (error) {
+                console.error('切换手势控制状态失败:', error);
+                gestureToggleBtn.textContent = '服务不可用';
+                gestureToggleBtn.classList.add('disabled');
+                alert('无法连接到手势控制服务，请确保gesture.py正在运行');
+            }
+        });
+    }
+
+// 修改updateGestureFeedback函数，直接更新按钮文本
+    function updateGestureFeedback(gestures, directions) {
+        const gestureToggleBtn = document.getElementById('gesture-toggle-btn');
+
+        if (!gestureControlEnabled) return;
+
+        let gestureName = '';
+
+        // 双手手势反馈
+        if (gestures.length === 2) {
+            if (gestures[0] === 'Five' && gestures[1] === 'Five') {
+                gestureName = '放大';
+            } else if (gestures[0] === 'Fist' && gestures[1] === 'Fist') {
+                gestureName = '缩小';
+            }
+        }
+        // 单手指向手势反馈
+        else if (gestures.length === 1 && gestures[0] === 'Point' && directions && directions[0]) {
+            gestureName = ` ${directions[0]}`;
+        }
+        // 单手握拳手势反馈
+        else if (gestures.length === 1 && gestures[0] === 'Fist') {
+            gestureName = '暂停旋转';
+        }
+        // 无手势
+        else {
+            gestureName = '等待手势...';
+        }
+
+        gestureToggleBtn.textContent = gestureName;
+    }
+
+
 
 
     function debugLog(message, data = null) {
